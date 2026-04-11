@@ -13,6 +13,8 @@ use App\Controllers\TicketController;
 use App\Controllers\AdminController;
 use App\Controllers\KnowledgeBaseController;
 use App\Controllers\WeeklyPlanController;
+use App\Controllers\ApiController;
+use App\Middleware\ApiKeyMiddleware;
 
 // Load .env
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
@@ -68,6 +70,34 @@ $router->post('/weekly-plan/task/toggle', [WeeklyPlanController::class, 'toggleT
 $router->get('/weekly-plan/{id}', [WeeklyPlanController::class, 'show'], [AuthMiddleware::class]);
 $router->post('/weekly-plan/{id}/task', [WeeklyPlanController::class, 'addTask'], [AuthMiddleware::class]);
 $router->post('/weekly-plan/{id}/delete', [WeeklyPlanController::class, 'delete'], [AuthMiddleware::class]);
+
+// ─────────────────────────────────────────────────────────
+// REST API routes — authenticated with API key (Bearer token)
+// All responses are JSON. No session required.
+// ─────────────────────────────────────────────────────────
+$api = [ApiKeyMiddleware::class];
+
+// Ticket endpoints
+$router->get('/api/tickets', [ApiController::class, 'listTickets'], $api);
+$router->post('/api/tickets', [ApiController::class, 'createTicket'], $api);
+
+// Specific sub-routes MUST be registered before the /api/tickets/{id} catch-all
+$router->get('/api/tickets/{id}/evidence', [ApiController::class, 'listEvidence'], $api);
+$router->post('/api/tickets/{id}/evidence', [ApiController::class, 'uploadEvidence'], $api);
+$router->post('/api/tickets/{id}/status', [ApiController::class, 'updateStatus'], $api);
+$router->post('/api/tickets/{id}/phase', [ApiController::class, 'updatePhase'], $api);
+$router->post('/api/tickets/{id}/note', [ApiController::class, 'addNote'], $api);
+$router->post('/api/tickets/{id}/assign', [ApiController::class, 'assign'], $api);
+$router->get('/api/tickets/{id}', [ApiController::class, 'getTicket'], $api);
+
+// User endpoint (admin only)
+$router->get('/api/users', [ApiController::class, 'listUsers'], $api);
+
+// Admin — API key management
+$router->get('/admin/api-keys', [AdminController::class, 'apiKeys'], [AuthMiddleware::class]);
+$router->post('/admin/api-keys/generate', [AdminController::class, 'generateKey'], [AuthMiddleware::class]);
+$router->post('/admin/api-keys/{id}/revoke', [AdminController::class, 'revokeKey'], [AuthMiddleware::class]);
+$router->post('/admin/api-keys/{id}/delete', [AdminController::class, 'deleteApiKey'], [AuthMiddleware::class]);
 
 $request = new Request();
 $router->dispatch($request->uri(), $request->method());

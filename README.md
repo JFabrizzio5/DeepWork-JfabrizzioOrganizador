@@ -162,4 +162,100 @@ Allowed evidence types: `png`, `jpg`, `jpeg`, `pdf`, `xml`, `zip`, `mp4`
 
 ---
 
+## REST API
+
+The system exposes a REST API for external integrations (CI pipelines, mobile apps, scripts, etc.).
+
+### Authentication
+
+Every API request must include a valid API key. Generate keys from the admin panel at **Admin → API Keys**.
+
+Send the token in the `Authorization` header (preferred):
+
+```
+Authorization: Bearer <your-token>
+```
+
+Or as a query string fallback:
+
+```
+GET /api/tickets?api_key=<your-token>
+```
+
+### Database migration
+
+If you already imported `schema.sql`, run the migration to add the API keys table:
+
+```bash
+mysql -u root -p helpdesk < migrations/add_api_keys.sql
+```
+
+Fresh installations can just use `schema.sql` — the table is already included.
+
+### Endpoints
+
+All responses are `application/json`.
+
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/tickets` | any | List tickets (auto-scoped by role) |
+| `POST` | `/api/tickets` | any | Create a ticket |
+| `GET` | `/api/tickets/{id}` | any | Get ticket + notes + evidences |
+| `POST` | `/api/tickets/{id}/status` | dev, admin | Update status |
+| `POST` | `/api/tickets/{id}/phase` | dev, admin | Update phase |
+| `POST` | `/api/tickets/{id}/note` | dev, admin | Add internal note |
+| `POST` | `/api/tickets/{id}/assign` | admin | Assign ticket to a developer |
+| `POST` | `/api/tickets/{id}/evidence` | any* | Upload an evidence file (multipart/form-data) |
+| `GET` | `/api/tickets/{id}/evidence` | any* | List evidence files for a ticket |
+| `GET` | `/api/users` | admin | List all users |
+
+\* Users may only act on their own tickets.
+
+### Examples (curl)
+
+**List tickets**
+```bash
+curl -H "Authorization: Bearer <token>" https://your-domain/api/tickets
+```
+
+**Create a ticket**
+```bash
+curl -X POST https://your-domain/api/tickets \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "requester_email": "user@example.com",
+    "requester_name": "John Doe",
+    "description": "Login button does not respond on mobile",
+    "type": "bug",
+    "impact": "high",
+    "priority_user": "high"
+  }'
+```
+
+**Change status**
+```bash
+curl -X POST https://your-domain/api/tickets/42/status \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "in_progress"}'
+```
+
+**Upload evidence**
+```bash
+curl -X POST https://your-domain/api/tickets/42/evidence \
+  -H "Authorization: Bearer <token>" \
+  -F "evidence=@/path/to/screenshot.png"
+```
+
+**Add note**
+```bash
+curl -X POST https://your-domain/api/tickets/42/note \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"note": "Reproduced on iOS 17. Assigned to frontend team."}'
+```
+
+---
+
 *HelpDesk · CometaxCompany · Developed by [@jfabrizzio](https://github.com/jfabrizzio)*

@@ -5,6 +5,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Services\UserService;
+use App\Repositories\ApiKeyRepository;
 
 class AdminController
 {
@@ -73,6 +74,87 @@ class AdminController
         $this->userService->delete((int)$id);
         Session::flash('success', 'User deleted.');
         Response::redirect($_ENV['APP_URL'] . '/admin/users');
+    }
+
+    // ──────────────────────────────────────────────
+    // API Key management (admin only)
+    // ──────────────────────────────────────────────
+
+    public function apiKeys(): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/tickets/list');
+        }
+
+        $repo    = new ApiKeyRepository();
+        $apiKeys = $repo->findAll();
+        $users   = $this->userService->getAll();
+
+        Response::view('admin/api_keys', [
+            'appUrl'   => $_ENV['APP_URL'],
+            'user'     => $currentUser,
+            'apiKeys'  => $apiKeys,
+            'users'    => $users,
+            'newToken' => Session::getFlash('new_token'),
+            'success'  => Session::getFlash('success'),
+            'error'    => Session::getFlash('error'),
+        ]);
+    }
+
+    public function generateKey(): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/tickets/list');
+        }
+
+        $name   = trim($this->request->post('name', ''));
+        $userId = (int)$this->request->post('user_id', $currentUser['id']);
+
+        if (empty($name)) {
+            Session::flash('error', 'Key label is required.');
+            Response::redirect($_ENV['APP_URL'] . '/admin/api-keys');
+        }
+
+        // Generate a cryptographically secure 48-byte token (96 hex chars)
+        $token = bin2hex(random_bytes(48));
+
+        $repo = new ApiKeyRepository();
+        $repo->create($userId, $name, $token);
+
+        // Show the raw token once in the UI
+        Session::flash('new_token', $token);
+        Session::flash('success', 'API key created successfully.');
+        Response::redirect($_ENV['APP_URL'] . '/admin/api-keys');
+    }
+
+    public function revokeKey(string $id): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/tickets/list');
+        }
+
+        $repo = new ApiKeyRepository();
+        $repo->revoke((int)$id);
+
+        Session::flash('success', 'API key revoked.');
+        Response::redirect($_ENV['APP_URL'] . '/admin/api-keys');
+    }
+
+    public function deleteApiKey(string $id): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/tickets/list');
+        }
+
+        $repo = new ApiKeyRepository();
+        $repo->delete((int)$id);
+
+        Session::flash('success', 'API key deleted.');
+        Response::redirect($_ENV['APP_URL'] . '/admin/api-keys');
     }
 
     private function getCurrentUser(): array

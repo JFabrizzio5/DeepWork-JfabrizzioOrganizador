@@ -94,3 +94,17 @@ CREATE TABLE weekly_tasks (
 -- Default admin user (password: password)
 INSERT INTO users (name, email, password, role) VALUES 
 ('Admin', 'admin@helpdesk.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+
+-- ─────────────────────────────────────────────────────────
+-- API Keys (for REST API authentication)
+-- ─────────────────────────────────────────────────────────
+CREATE TABLE api_keys (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  name VARCHAR(100) NOT NULL COMMENT 'Friendly label, e.g. "CI Pipeline"',
+  token VARCHAR(96) NOT NULL UNIQUE,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  last_used_at TIMESTAMP NULL DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

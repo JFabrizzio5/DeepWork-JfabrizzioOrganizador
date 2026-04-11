@@ -25,6 +25,36 @@ class Router
         ];
     }
 
+    public function put(string $path, array|callable $handler, array $middlewares = []): void
+    {
+        $this->routes[] = [
+            'method' => 'PUT',
+            'path' => $path,
+            'handler' => $handler,
+            'middlewares' => $middlewares,
+        ];
+    }
+
+    public function patch(string $path, array|callable $handler, array $middlewares = []): void
+    {
+        $this->routes[] = [
+            'method' => 'PATCH',
+            'path' => $path,
+            'handler' => $handler,
+            'middlewares' => $middlewares,
+        ];
+    }
+
+    public function delete(string $path, array|callable $handler, array $middlewares = []): void
+    {
+        $this->routes[] = [
+            'method' => 'DELETE',
+            'path' => $path,
+            'handler' => $handler,
+            'middlewares' => $middlewares,
+        ];
+    }
+
     public function dispatch(string $uri, string $method): void
     {
         foreach ($this->routes as $route) {
