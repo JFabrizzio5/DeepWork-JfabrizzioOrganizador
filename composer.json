@@ -1,0 +1,20 @@
+{
+    "name": "cometaxcompany/helpdesk",
+    "description": "Helpdesk Ticket System - Developed by @jfabrizzio | CometaxCompany",
+    "type": "project",
+    "require": {
+        "php": ">=8.0",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "jfabrizzio",
+            "homepage": "https://github.com/jfabrizzio"
+        }
+    ]
+}

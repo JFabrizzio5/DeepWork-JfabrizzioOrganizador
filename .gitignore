@@ -1,0 +1,22 @@
+# Dependencies
+/vendor/
+
+# Environment
+.env
+
+# Uploads (runtime)
+/public/uploads/tickets/*/
+/public/uploads/weekly/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PHP cache
+*.cache
