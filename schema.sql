@@ -93,7 +93,9 @@ CREATE TABLE weekly_tasks (
 
 -- Default admin user (password: password)
 INSERT INTO users (name, email, password, role) VALUES 
-('Admin', 'admin@helpdesk.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+('Admin', 'admin@helpdesk.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
+-- Fabrizzio admin user (password: fabrizzio)
+('Fabrizzio', 'fabrizzio@fabrizzio.com', '$2y$10$wH7QiIUNTopW14eHuaRCVOJW6kIlodq3OW9Pf6WlBlAxEvPoXndKm', 'admin');
 
 -- ─────────────────────────────────────────────────────────
 -- API Keys (for REST API authentication)
