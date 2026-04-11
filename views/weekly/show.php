@@ -44,7 +44,7 @@ $projectColors = [
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <div class="flex items-center gap-3 mb-2">
-                                <span class="text-sm font-bold text-white px-3 py-1 rounded-lg text-white <?= $projectColors[$plan['project']] ?? 'bg-slate-700' ?>">
+                                <span class="text-sm font-bold text-white px-3 py-1 rounded-lg <?= $projectColors[$plan['project']] ?? 'bg-slate-700' ?>">
                                     Project <?= htmlspecialchars($plan['project']) ?>
                                 </span>
                                 <span class="text-xs px-3 py-1 rounded border <?= $statusColors[$plan['status']] ?? '' ?>">
@@ -150,10 +150,6 @@ $projectColors = [
                 <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
                 <div class="bg-slate-800 rounded-xl border border-slate-700 p-6">
                     <h3 class="text-lg font-semibold text-white mb-4">Update Plan Status</h3>
-                    <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/<?= htmlspecialchars((string)$plan['id']) ?>/task" class="hidden">
-                    </form>
-                    <?php /* We'll use the same update mechanism via a simple form: */ ?>
-                    <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/<?= htmlspecialchars((string)$plan['id']) ?>/task" style="display:none"></form>
                     <div class="flex gap-3 flex-wrap">
                         <?php foreach (['pending', 'in_progress', 'completed'] as $s): ?>
                         <span class="text-xs px-3 py-1.5 rounded border <?= $plan['status'] === $s ? 'bg-blue-600 text-white border-blue-500' : 'border-slate-600 text-slate-400' ?>">
