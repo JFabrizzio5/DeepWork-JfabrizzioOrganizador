@@ -35,8 +35,9 @@
                                 <div>
                                     <label class="block text-sm font-medium text-slate-300 mb-1">Project</label>
                                     <select name="project" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-500">
-                                        <?php foreach (['A', 'B', 'C', 'D'] as $p): ?>
-                                        <option value="<?= $p ?>">Project <?= $p ?></option>
+                                        <option value="">— Select project —</option>
+                                        <?php foreach ($projects as $p): ?>
+                                        <option value="<?= htmlspecialchars($p['name']) ?>"><?= htmlspecialchars($p['name']) ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>

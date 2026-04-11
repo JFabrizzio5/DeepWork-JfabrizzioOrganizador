@@ -132,4 +132,61 @@ class WeeklyPlanRepository
         $result = $stmt->fetch();
         return $result ?: null;
     }
+
+    public function deleteTask(int $taskId): bool
+    {
+        $stmt = $this->db->prepare('DELETE FROM weekly_tasks WHERE id = ?');
+        return $stmt->execute([$taskId]);
+    }
+
+    /** Returns plans whose week_start falls in the given ISO week (Monday–Sunday). */
+    public function findByWeekStart(string $weekStart): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT wp.*, u.name as assigned_name, c.name as creator_name
+             FROM weekly_plans wp
+             LEFT JOIN users u ON wp.assigned_to = u.id
+             LEFT JOIN users c ON wp.created_by = c.id
+             WHERE wp.week_start = ?
+             ORDER BY wp.project ASC'
+        );
+        $stmt->execute([$weekStart]);
+        return $stmt->fetchAll();
+    }
+
+    /** Returns aggregated status counts per week_start for a dashboard view. */
+    public function getWeekSummaries(int $limit = 10): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT
+                week_start,
+                COUNT(*) AS total_plans,
+                SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) AS completed,
+                SUM(CASE WHEN status = "in_progress" THEN 1 ELSE 0 END) AS in_progress,
+                SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) AS pending,
+                ROUND(AVG(progress_percent)) AS avg_progress
+             FROM weekly_plans
+             GROUP BY week_start
+             ORDER BY week_start DESC
+             LIMIT ?'
+        );
+        $stmt->execute([$limit]);
+        return $stmt->fetchAll();
+    }
+
+    /** Returns all plans (with tasks) for the current/previous N weeks. */
+    public function findRecentPlans(int $weeks = 4): array
+    {
+        $since = date('Y-m-d', strtotime('-' . ($weeks * 7) . ' days'));
+        $stmt = $this->db->prepare(
+            'SELECT wp.*, u.name as assigned_name, c.name as creator_name
+             FROM weekly_plans wp
+             LEFT JOIN users u ON wp.assigned_to = u.id
+             LEFT JOIN users c ON wp.created_by = c.id
+             WHERE wp.week_start >= ?
+             ORDER BY wp.week_start DESC, wp.project ASC'
+        );
+        $stmt->execute([$since]);
+        return $stmt->fetchAll();
+    }
 }
