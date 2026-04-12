@@ -47,12 +47,12 @@ if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $vipColor)) { $vipColor = '#F59E0B'; }
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?> | HelpDesk</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <?php include dirname(__DIR__) . '/partials/head.php'; ?>
 </head>
 <body class="h-full bg-slate-900 text-slate-100">
 <div class="flex h-screen overflow-hidden">
     <?php include dirname(__DIR__) . '/partials/sidebar.php'; ?>
-    <div class="flex flex-col flex-1 overflow-hidden">
+    <div class="flex flex-col flex-1 overflow-hidden min-w-0">
         <?php include dirname(__DIR__) . '/partials/header.php'; ?>
         <main class="flex-1 overflow-y-auto p-6">
             <?php include dirname(__DIR__) . '/partials/flash.php'; ?>
