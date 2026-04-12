@@ -170,7 +170,7 @@ $impactColors = [
                             <?php
                                 $isVip    = !empty($ticket['requester_is_vip']);
                                 $vipColor = $ticket['requester_highlight_color'] ?? '#F59E0B';
-                                $rowStyle = $isVip ? "border-l-4; box-shadow: 0 0 12px 2px {$vipColor}40;" : '';
+                                if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $vipColor)) { $vipColor = '#F59E0B'; }
                                 $rowBorderStyle = $isVip ? "border-left: 4px solid {$vipColor};" : '';
                                 $isResolved = !empty($ticket['is_resolved']);
                             ?>

@@ -85,7 +85,7 @@
                                         <input type="hidden" name="highlight_color" id="vip_color_<?= $u['id'] ?>" value="<?= htmlspecialchars($vipColor) ?>">
                                         <button type="button"
                                                 title="<?= $isVip ? 'Quitar VIP' : 'Marcar VIP' ?>"
-                                                onclick="toggleVip(<?= $u['id'] ?>, <?= (int)$isVip ?>)"
+                                                onclick="toggleVip(<?= json_encode((int)$u['id']) ?>, <?= (int)$isVip ?>)"
                                                 class="text-xl transition-colors <?= $isVip ? '' : 'opacity-30 hover:opacity-80' ?>"
                                                 style="<?= $isVip ? "color:{$vipColor};" : 'color:#F59E0B;' ?>">★</button>
                                         <input type="color"
@@ -103,9 +103,13 @@
                                     // Show assign form inline
                                     ?>
                                     <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/admin/users/<?= htmlspecialchars((string)$u['id']) ?>/sucursales" class="flex flex-wrap gap-1 items-center">
-                                        <?php foreach ($sucursales as $suc): ?>
+                                        <?php
+                                        $assignedIds = $userSucursalMap[(int)$u['id']] ?? [];
+                                        foreach ($sucursales as $suc):
+                                        ?>
                                         <label class="flex items-center gap-1 text-xs text-slate-300 cursor-pointer">
                                             <input type="checkbox" name="sucursal_ids[]" value="<?= htmlspecialchars((string)$suc['id']) ?>"
+                                                   <?= in_array((string)$suc['id'], array_map('strval', $assignedIds)) ? 'checked' : '' ?>
                                                    class="w-3 h-3 rounded bg-slate-700 border-slate-600 text-blue-500">
                                             <?= htmlspecialchars($suc['nombre']) ?>
                                         </label>

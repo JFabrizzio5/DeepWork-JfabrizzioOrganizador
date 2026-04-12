@@ -39,6 +39,7 @@ $phaseLabels = [
 ];
 $isVip    = !empty($ticket['requester_is_vip']);
 $vipColor = $ticket['requester_highlight_color'] ?? '#F59E0B';
+if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $vipColor)) { $vipColor = '#F59E0B'; }
 ?>
 <!DOCTYPE html>
 <html lang="es" class="h-full">

@@ -163,7 +163,7 @@
                     </div>
 
                     <div class="flex items-center gap-4">
-                        <button type="submit" onclick="buildSteps()"
+                        <button type="submit"
                                 class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
                             Enviar Reporte
                         </button>

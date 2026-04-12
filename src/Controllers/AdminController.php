@@ -27,13 +27,22 @@ class AdminController
     {
         $users      = $this->userService->getAll();
         $sucursales = $this->sucursalRepo->findAll();
+
+        // Load assigned sucursales for each user
+        $userSucursalMap = [];
+        foreach ($users as $u) {
+            $assigned = $this->sucursalRepo->getSucursalesForUser((int)$u['id']);
+            $userSucursalMap[(int)$u['id']] = array_column($assigned, 'id');
+        }
+
         Response::view('admin/users', [
-            'appUrl'    => $_ENV['APP_URL'],
-            'user'      => $this->getCurrentUser(),
-            'users'     => $users,
-            'sucursales' => $sucursales,
-            'success'   => Session::getFlash('success'),
-            'error'     => Session::getFlash('error'),
+            'appUrl'          => $_ENV['APP_URL'],
+            'user'            => $this->getCurrentUser(),
+            'users'           => $users,
+            'sucursales'      => $sucursales,
+            'userSucursalMap' => $userSucursalMap,
+            'success'         => Session::getFlash('success'),
+            'error'           => Session::getFlash('error'),
         ]);
     }
 

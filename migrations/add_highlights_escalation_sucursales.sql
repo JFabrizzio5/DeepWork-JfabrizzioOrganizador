@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS sucursales (
 );
 
 -- Default branches
-INSERT INTO sucursales (nombre, descripcion) VALUES
+INSERT IGNORE INTO sucursales (nombre, descripcion) VALUES
 ('Sucursal Central', 'Oficina principal'),
 ('Sucursal Norte', 'Sede norte'),
 ('Sucursal Sur', 'Sede sur');
