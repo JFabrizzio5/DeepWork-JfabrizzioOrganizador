@@ -23,7 +23,7 @@ foreach ($projects as $p) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weekly Plans | HelpDesk</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <?php include dirname(__DIR__) . '/partials/head.php'; ?>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -31,7 +31,7 @@ foreach ($projects as $p) {
 <body class="h-full bg-slate-900 text-slate-100">
 <div class="flex h-screen overflow-hidden">
     <?php include dirname(__DIR__) . '/partials/sidebar.php'; ?>
-    <div class="flex flex-col flex-1 overflow-hidden">
+    <div class="flex flex-col flex-1 overflow-hidden min-w-0">
         <?php include dirname(__DIR__) . '/partials/header.php'; ?>
         <main class="flex-1 overflow-y-auto p-6">
             <?php include dirname(__DIR__) . '/partials/flash.php'; ?>
