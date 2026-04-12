@@ -68,25 +68,5 @@ function toggleSidebar() {
     if (!s) return;
     if (s.classList.contains('-translate-x-full')) { openSidebar(); } else { closeSidebar(); }
 }
-
-/* ── Theme toggle ───────────────────────────────────── */
-function toggleTheme() {
-    var isLight = document.documentElement.classList.toggle('light');
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    updateThemeIcons();
-}
-function updateThemeIcons() {
-    var isLight = document.documentElement.classList.contains('light');
-    var sun  = document.getElementById('icon-sun');
-    var moon = document.getElementById('icon-moon');
-    if (sun)  sun.classList.toggle('hidden',  isLight);
-    if (moon) moon.classList.toggle('hidden', !isLight);
-}
-/* Run once DOM is ready */
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateThemeIcons);
-} else {
-    updateThemeIcons();
-}
 </script>
 

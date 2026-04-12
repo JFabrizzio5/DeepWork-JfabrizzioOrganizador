@@ -106,23 +106,7 @@
     </div>
 
     <script>
-    function toggleTheme() {
-        var isLight = document.documentElement.classList.toggle('light');
-        localStorage.setItem('theme', isLight ? 'light' : 'dark');
-        updateThemeIcons();
-    }
-    function updateThemeIcons() {
-        var isLight = document.documentElement.classList.contains('light');
-        var sun  = document.getElementById('icon-sun');
-        var moon = document.getElementById('icon-moon');
-        if (sun)  sun.classList.toggle('hidden',  isLight);
-        if (moon) moon.classList.toggle('hidden', !isLight);
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', updateThemeIcons);
-    } else {
-        updateThemeIcons();
-    }
+    /* toggleTheme / updateThemeIcons are defined in head.php */
     </script>
 </body>
 </html>

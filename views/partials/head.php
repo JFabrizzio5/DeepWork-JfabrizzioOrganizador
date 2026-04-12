@@ -67,4 +67,31 @@ html.light ::-webkit-scrollbar-thumb  { background:#cbd5e1; }
 
 /* Elevation in light mode */
 html.light .shadow-xl           { box-shadow:0 20px 25px -5px rgba(0,0,0,.08),0 8px 10px -6px rgba(0,0,0,.06); }
+
+/* Note: the slash-opacity variants above use !important because Tailwind CDN
+   generates those rules with an inline opacity property that cannot be
+   overridden by selector specificity alone. All other overrides rely on the
+   higher specificity of the `html.light .class-name` selector (0,2,0) vs
+   Tailwind's plain `.class-name` (0,1,0).                                    */
 </style>
+
+<script>
+/* ── Theme helpers (shared across all pages) ─────────────────────────── */
+function toggleTheme() {
+    var isLight = document.documentElement.classList.toggle('light');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    updateThemeIcons();
+}
+function updateThemeIcons() {
+    var isLight = document.documentElement.classList.contains('light');
+    var sun  = document.getElementById('icon-sun');
+    var moon = document.getElementById('icon-moon');
+    if (sun)  sun.classList.toggle('hidden',  isLight);
+    if (moon) moon.classList.toggle('hidden', !isLight);
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateThemeIcons);
+} else {
+    updateThemeIcons();
+}
+</script>
