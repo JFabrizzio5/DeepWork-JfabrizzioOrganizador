@@ -91,6 +91,19 @@ class WeeklyPlanService
         return $result;
     }
 
+    public function updateTaskStatus(int $taskId, string $status, ?int $assignedTo = null): bool
+    {
+        $task = $this->planRepo->findTaskById($taskId);
+        if (!$task) {
+            return false;
+        }
+        $result = $this->planRepo->updateTaskStatus($taskId, $status, $assignedTo);
+        if ($result) {
+            $this->recalculateProgress((int)$task['plan_id']);
+        }
+        return $result;
+    }
+
     public function recalculateProgress(int $planId): void
     {
         $tasks = $this->planRepo->getTasksByPlanId($planId);

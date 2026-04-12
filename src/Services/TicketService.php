@@ -67,4 +67,14 @@ class TicketService
     {
         return $this->ticketRepo->getNotes($ticketId);
     }
+
+    public function setEscalation(int $id, string $escalation): bool
+    {
+        return $this->ticketRepo->update($id, ['escalation' => $escalation]);
+    }
+
+    public function setResolved(int $id, int $resolved): bool
+    {
+        return $this->ticketRepo->update($id, ['is_resolved' => $resolved]);
+    }
 }

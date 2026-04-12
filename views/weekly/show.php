@@ -1,9 +1,14 @@
 <?php
-$pageTitle = 'Weekly Plan — Week of ' . date('M j, Y', strtotime($plan['week_start'] ?? 'now'));
+$pageTitle = 'Plan Semanal — Semana del ' . date('d/m/Y', strtotime($plan['week_start'] ?? 'now'));
 $statusColors = [
     'pending'     => 'bg-slate-700 text-slate-300 border-slate-600',
     'in_progress' => 'bg-yellow-900/50 text-yellow-300 border-yellow-700',
     'completed'   => 'bg-green-900/50 text-green-300 border-green-700',
+];
+$planStatusLabels = [
+    'pending'     => 'Pendiente',
+    'in_progress' => 'En progreso',
+    'completed'   => 'Completado',
 ];
 
 // Find badge color from projects list
@@ -79,18 +84,18 @@ foreach ($projects as $p) {
                                     <?= htmlspecialchars($plan['project']) ?>
                                 </span>
                                 <span class="text-xs px-3 py-1 rounded border <?= $statusColors[$plan['status']] ?? '' ?>">
-                                    <?= htmlspecialchars(str_replace('_', ' ', ucfirst($plan['status']))) ?>
+                                    <?= $planStatusLabels[$plan['status']] ?? htmlspecialchars(str_replace('_', ' ', ucfirst($plan['status']))) ?>
                                 </span>
                             </div>
-                            <h2 class="text-xl font-bold text-white">Week of <?= htmlspecialchars(date('F j, Y', strtotime($plan['week_start']))) ?></h2>
+                            <h2 class="text-xl font-bold text-white">Semana del <?= htmlspecialchars(date('d/m/Y', strtotime($plan['week_start']))) ?></h2>
                             <p class="text-slate-400 text-sm mt-1">
-                                Assigned to: <strong class="text-slate-300"><?= htmlspecialchars($plan['assigned_name'] ?? 'Unassigned') ?></strong>
-                                · Created by: <?= htmlspecialchars($plan['creator_name'] ?? 'Unknown') ?>
+                                Asignado a: <strong class="text-slate-300"><?= htmlspecialchars($plan['assigned_name'] ?? 'Sin asignar') ?></strong>
+                                · Creado por: <?= htmlspecialchars($plan['creator_name'] ?? 'Desconocido') ?>
                             </p>
                         </div>
                         <div class="text-right">
                             <p class="text-3xl font-bold text-white"><?= htmlspecialchars((string)$plan['progress_percent']) ?>%</p>
-                            <p class="text-xs text-slate-500">complete</p>
+                            <p class="text-xs text-slate-500">completado</p>
                         </div>
                     </div>
 
@@ -196,7 +201,7 @@ foreach ($projects as $p) {
                             </div>
                         </li>
                         <?php endforeach; ?>
-                    </ul>
+                    </div>
                     <?php endif; ?>
 
                     <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
@@ -257,6 +262,20 @@ const planData = <?= json_encode([
         'assignee' => $t['assignee_name'] ?? '',
     ], $plan['tasks'] ?? []),
 ]) ?>;
+
+function openTaskEdit(taskId, planId, status, assignedTo) {
+    document.getElementById('modal-task-id').value = taskId;
+    document.getElementById('modal-status').value = status;
+    const assignedSelect = document.getElementById('modal-assigned');
+    if (assignedSelect) {
+        assignedSelect.value = assignedTo !== null ? assignedTo : '';
+    }
+    document.getElementById('task-edit-modal').classList.remove('hidden');
+}
+
+function closeTaskEdit() {
+    document.getElementById('task-edit-modal').classList.add('hidden');
+}
 
 function exportPlanExcel() {
     const rows = [['Semana', 'Proyecto', 'Estado', 'Asignado a', 'Progreso %', 'Resumen']];

@@ -7,28 +7,42 @@ use App\Core\Session;
 use App\Services\UserService;
 use App\Services\WeeklyPlanService;
 use App\Repositories\ApiKeyRepository;
+use App\Repositories\SucursalRepository;
 
 class AdminController
 {
     private UserService $userService;
+    private SucursalRepository $sucursalRepo;
     private Request $request;
 
     public function __construct()
     {
         Session::start();
-        $this->userService = new UserService();
-        $this->request = new Request();
+        $this->userService  = new UserService();
+        $this->sucursalRepo = new SucursalRepository();
+        $this->request      = new Request();
     }
 
     public function users(): void
     {
-        $users = $this->userService->getAll();
+        $users      = $this->userService->getAll();
+        $sucursales = $this->sucursalRepo->findAll();
+
+        // Load assigned sucursales for each user
+        $userSucursalMap = [];
+        foreach ($users as $u) {
+            $assigned = $this->sucursalRepo->getSucursalesForUser((int)$u['id']);
+            $userSucursalMap[(int)$u['id']] = array_column($assigned, 'id');
+        }
+
         Response::view('admin/users', [
-            'appUrl' => $_ENV['APP_URL'],
-            'user' => $this->getCurrentUser(),
-            'users' => $users,
-            'success' => Session::getFlash('success'),
-            'error' => Session::getFlash('error'),
+            'appUrl'          => $_ENV['APP_URL'],
+            'user'            => $this->getCurrentUser(),
+            'users'           => $users,
+            'sucursales'      => $sucursales,
+            'userSucursalMap' => $userSucursalMap,
+            'success'         => Session::getFlash('success'),
+            'error'           => Session::getFlash('error'),
         ]);
     }
 
@@ -36,31 +50,31 @@ class AdminController
     {
         Response::view('admin/users_create', [
             'appUrl' => $_ENV['APP_URL'],
-            'user' => $this->getCurrentUser(),
-            'error' => Session::getFlash('error'),
+            'user'   => $this->getCurrentUser(),
+            'error'  => Session::getFlash('error'),
         ]);
     }
 
     public function storeUser(): void
     {
-        $name = trim($this->request->post('name', ''));
-        $email = trim($this->request->post('email', ''));
+        $name     = trim($this->request->post('name', ''));
+        $email    = trim($this->request->post('email', ''));
         $password = $this->request->post('password', '');
-        $role = $this->request->post('role', 'user');
+        $role     = $this->request->post('role', 'user');
 
         if (empty($name) || empty($email) || empty($password)) {
-            Session::flash('error', 'Name, email and password are required.');
+            Session::flash('error', 'Nombre, correo y contraseña son requeridos.');
             Response::redirect($_ENV['APP_URL'] . '/admin/users/create');
         }
 
         $this->userService->create([
-            'name' => $name,
-            'email' => $email,
+            'name'     => $name,
+            'email'    => $email,
             'password' => $password,
-            'role' => $role,
+            'role'     => $role,
         ]);
 
-        Session::flash('success', 'User created successfully.');
+        Session::flash('success', 'Usuario creado exitosamente.');
         Response::redirect($_ENV['APP_URL'] . '/admin/users');
     }
 
@@ -68,13 +82,102 @@ class AdminController
     {
         $currentUser = $this->getCurrentUser();
         if ((int)$id === $currentUser['id']) {
-            Session::flash('error', 'You cannot delete your own account.');
+            Session::flash('error', 'No puedes eliminar tu propia cuenta.');
             Response::redirect($_ENV['APP_URL'] . '/admin/users');
         }
 
         $this->userService->delete((int)$id);
-        Session::flash('success', 'User deleted.');
+        Session::flash('success', 'Usuario eliminado.');
         Response::redirect($_ENV['APP_URL'] . '/admin/users');
+    }
+
+    public function updateUserHighlight(string $id): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/admin/users');
+        }
+
+        $isVip = (int)$this->request->post('is_vip', 0);
+        $color = trim($this->request->post('highlight_color', '#F59E0B'));
+
+        if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) {
+            $color = '#F59E0B';
+        }
+
+        $this->userService->setHighlight((int)$id, $isVip, $color);
+        Session::flash('success', 'Destacado actualizado.');
+        Response::redirect($_ENV['APP_URL'] . '/admin/users');
+    }
+
+    public function updateUserSucursales(string $id): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/admin/users');
+        }
+
+        $sucursalIds = $this->request->post('sucursal_ids', []);
+        if (!is_array($sucursalIds)) {
+            $sucursalIds = [];
+        }
+
+        $this->sucursalRepo->setUserSucursales((int)$id, $sucursalIds);
+        Session::flash('success', 'Sucursales del usuario actualizadas.');
+        Response::redirect($_ENV['APP_URL'] . '/admin/users');
+    }
+
+    // ──────────────────────────────────────────────
+    // Sucursal management
+    // ──────────────────────────────────────────────
+
+    public function sucursales(): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/tickets/list');
+        }
+
+        $sucursales = $this->sucursalRepo->findAll();
+        Response::view('admin/sucursales', [
+            'appUrl'    => $_ENV['APP_URL'],
+            'user'      => $currentUser,
+            'sucursales' => $sucursales,
+            'success'   => Session::getFlash('success'),
+            'error'     => Session::getFlash('error'),
+        ]);
+    }
+
+    public function storeSucursal(): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/tickets/list');
+        }
+
+        $nombre      = trim($this->request->post('nombre', ''));
+        $descripcion = trim($this->request->post('descripcion', '')) ?: null;
+
+        if (empty($nombre)) {
+            Session::flash('error', 'El nombre de la sucursal es requerido.');
+            Response::redirect($_ENV['APP_URL'] . '/admin/sucursales');
+        }
+
+        $this->sucursalRepo->create($nombre, $descripcion);
+        Session::flash('success', 'Sucursal creada exitosamente.');
+        Response::redirect($_ENV['APP_URL'] . '/admin/sucursales');
+    }
+
+    public function deleteSucursal(string $id): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/tickets/list');
+        }
+
+        $this->sucursalRepo->delete((int)$id);
+        Session::flash('success', 'Sucursal eliminada.');
+        Response::redirect($_ENV['APP_URL'] . '/admin/sucursales');
     }
 
     // ──────────────────────────────────────────────
@@ -114,19 +217,17 @@ class AdminController
         $userId = (int)$this->request->post('user_id', $currentUser['id']);
 
         if (empty($name)) {
-            Session::flash('error', 'Key label is required.');
+            Session::flash('error', 'La etiqueta de la clave es requerida.');
             Response::redirect($_ENV['APP_URL'] . '/admin/api-keys');
         }
 
-        // Generate a cryptographically secure 48-byte token (96 hex chars)
         $token = bin2hex(random_bytes(48));
 
         $repo = new ApiKeyRepository();
         $repo->create($userId, $name, $token);
 
-        // Show the raw token once in the UI
         Session::flash('new_token', $token);
-        Session::flash('success', 'API key created successfully.');
+        Session::flash('success', 'Clave API creada exitosamente.');
         Response::redirect($_ENV['APP_URL'] . '/admin/api-keys');
     }
 
@@ -140,7 +241,7 @@ class AdminController
         $repo = new ApiKeyRepository();
         $repo->revoke((int)$id);
 
-        Session::flash('success', 'API key revoked.');
+        Session::flash('success', 'Clave API revocada.');
         Response::redirect($_ENV['APP_URL'] . '/admin/api-keys');
     }
 
@@ -154,7 +255,7 @@ class AdminController
         $repo = new ApiKeyRepository();
         $repo->delete((int)$id);
 
-        Session::flash('success', 'API key deleted.');
+        Session::flash('success', 'Clave API eliminada.');
         Response::redirect($_ENV['APP_URL'] . '/admin/api-keys');
     }
 
@@ -165,11 +266,10 @@ class AdminController
             Response::redirect($_ENV['APP_URL'] . '/tickets/list');
         }
 
-        $planService  = new WeeklyPlanService();
-        $summaries    = $planService->getWeekSummaries(12);
-        $recentPlans  = $planService->findRecentPlans(8);
+        $planService = new WeeklyPlanService();
+        $summaries   = $planService->getWeekSummaries(12);
+        $recentPlans = $planService->findRecentPlans(8);
 
-        // Group recent plans by week_start
         $byWeek = [];
         foreach ($recentPlans as $plan) {
             $byWeek[$plan['week_start']][] = $plan;
@@ -177,12 +277,12 @@ class AdminController
         krsort($byWeek);
 
         Response::view('admin/weekly_dashboard', [
-            'appUrl'      => $_ENV['APP_URL'],
-            'user'        => $currentUser,
-            'summaries'   => $summaries,
-            'byWeek'      => $byWeek,
-            'success'     => Session::getFlash('success'),
-            'error'       => Session::getFlash('error'),
+            'appUrl'    => $_ENV['APP_URL'],
+            'user'      => $currentUser,
+            'summaries' => $summaries,
+            'byWeek'    => $byWeek,
+            'success'   => Session::getFlash('success'),
+            'error'     => Session::getFlash('error'),
         ]);
     }
 

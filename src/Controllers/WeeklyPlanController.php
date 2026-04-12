@@ -201,6 +201,29 @@ class WeeklyPlanController
         Response::redirect($_ENV['APP_URL'] . '/weekly-plan/' . $planId);
     }
 
+    public function updateTaskStatus(): void
+    {
+        $user = $this->getCurrentUser();
+        if (!in_array($user['role'], ['admin', 'dev'])) {
+            Response::abort(403, 'Access denied.');
+        }
+
+        $taskId     = (int)$this->request->post('task_id', 0);
+        $planId     = (int)$this->request->post('plan_id', 0);
+        $status     = $this->request->post('status', '');
+        $assignedTo = $this->request->post('assigned_to', null) ?: null;
+
+        $allowed = ['pending', 'in_progress', 'done'];
+        if (!in_array($status, $allowed)) {
+            Session::flash('error', 'Estado no válido.');
+            Response::redirect($_ENV['APP_URL'] . '/weekly-plan/' . $planId);
+        }
+
+        $this->planService->updateTaskStatus($taskId, $status, $assignedTo ? (int)$assignedTo : null);
+        Session::flash('success', 'Tarea actualizada.');
+        Response::redirect($_ENV['APP_URL'] . '/weekly-plan/' . $planId);
+    }
+
     public function updateStatus(string $id): void
     {
         $user = $this->getCurrentUser();

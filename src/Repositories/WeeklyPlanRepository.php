@@ -132,6 +132,12 @@ class WeeklyPlanRepository
         return $stmt->execute([$status, $assignedTo, $taskId]);
     }
 
+    public function updateTaskStatus(int $taskId, string $status, ?int $assignedTo = null): bool
+    {
+        $stmt = $this->db->prepare('UPDATE weekly_tasks SET status = ?, assigned_to = ? WHERE id = ?');
+        return $stmt->execute([$status, $assignedTo, $taskId]);
+    }
+
     public function getTasksByPlanId(int $planId): array
     {
         $stmt = $this->db->prepare(

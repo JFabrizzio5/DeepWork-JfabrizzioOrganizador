@@ -5,6 +5,11 @@ $statusColors = [
     'in_progress' => 'bg-yellow-900/50 text-yellow-300 border-yellow-700',
     'completed'   => 'bg-green-900/50 text-green-300 border-green-700',
 ];
+$statusLabels = [
+    'pending'     => 'Pendiente',
+    'in_progress' => 'En progreso',
+    'completed'   => 'Completado',
+];
 
 // Build a color map keyed by project name
 $projectColorMap = [];
@@ -163,7 +168,7 @@ foreach ($projects as $p) {
                                     <?= htmlspecialchars($plan['project']) ?>
                                 </span>
                                 <span class="text-xs px-2 py-0.5 rounded border <?= $statusColors[$plan['status']] ?? 'bg-slate-700 text-slate-300 border-slate-600' ?>">
-                                    <?= htmlspecialchars(str_replace('_', ' ', $plan['status'])) ?>
+                                    <?= $statusLabels[$plan['status']] ?? htmlspecialchars(str_replace('_', ' ', $plan['status'])) ?>
                                 </span>
                             </div>
                             <p class="text-white font-semibold">Week of <?= htmlspecialchars(date('M j, Y', strtotime($plan['week_start']))) ?></p>
