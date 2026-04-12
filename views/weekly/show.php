@@ -234,7 +234,6 @@ $taskStatusLabels = [
                 <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
                 <div class="bg-slate-800 rounded-xl border border-slate-700 p-6">
                     <h3 class="text-lg font-semibold text-white mb-4">Actualizar estado del plan</h3>
-                    <?php $planStatusLabels = ['pending' => 'Pendiente', 'in_progress' => 'En progreso', 'completed' => 'Completado']; ?>
                     <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/<?= htmlspecialchars((string)$plan['id']) ?>/status" class="flex gap-3 flex-wrap">
                         <?php foreach (['pending', 'in_progress', 'completed'] as $s): ?>
                         <button type="submit" name="status" value="<?= $s ?>"

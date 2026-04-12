@@ -151,7 +151,7 @@ class WeeklyPlanController
         }
 
         $assignedTo = $this->request->post('assigned_to', null) ?: null;
-        $this->planService->addTask((int)$id, $title, $assignedTo !== null ? (int)$assignedTo : null);
+        $this->planService->addTask((int)$id, $title, $assignedTo ? (int)$assignedTo : null);
         $this->planService->recalculateProgress((int)$id);
         Session::flash('success', 'Task added.');
         Response::redirect($_ENV['APP_URL'] . '/weekly-plan/' . $id);
@@ -190,7 +190,7 @@ class WeeklyPlanController
             Response::redirect($_ENV['APP_URL'] . '/weekly-plan/' . $planId);
         }
 
-        $this->planService->updateTaskStatus($taskId, $status, $assignedTo !== null ? (int)$assignedTo : null);
+        $this->planService->updateTaskStatus($taskId, $status, $assignedTo ? (int)$assignedTo : null);
         Session::flash('success', 'Tarea actualizada.');
         Response::redirect($_ENV['APP_URL'] . '/weekly-plan/' . $planId);
     }
