@@ -48,6 +48,7 @@ $impactColors = [
             <?php include dirname(__DIR__) . '/partials/flash.php'; ?>
 
             <!-- Filtros -->
+            <?php if (($user['role'] ?? 'user') !== 'user'): ?>
             <div class="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-6">
                 <form method="GET" action="<?= htmlspecialchars($appUrl) ?>/tickets/list">
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mb-3">
@@ -130,12 +131,13 @@ $impactColors = [
                     </div>
                 </form>
             </div>
+            <?php endif; ?>
 
             <!-- Tabla de tickets -->
             <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-white">
-                        Todos los Tickets <span class="text-slate-400 text-sm font-normal">(<?= count($tickets) ?>)</span>
+                        <?= (($user['role'] ?? 'user') === 'user') ? 'Mis Solicitudes' : 'Todos los Tickets' ?> <span class="text-slate-400 text-sm font-normal">(<?= count($tickets) ?>)</span>
                     </h2>
                     <a href="<?= htmlspecialchars($appUrl) ?>/tickets/create" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">+ Nuevo Ticket</a>
                 </div>

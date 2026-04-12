@@ -34,6 +34,7 @@ $appUrl = $appUrl ?? $_ENV['APP_URL'] ?? '';
             <span>Nuevo Ticket</span>
         </a>
 
+        <?php if ($role !== 'user'): ?>
         <a href="<?= htmlspecialchars($appUrl) ?>/knowledge"
            class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,6 +50,7 @@ $appUrl = $appUrl ?? $_ENV['APP_URL'] ?? '';
             </svg>
             <span>Planes Semanales</span>
         </a>
+        <?php endif; ?>
 
         <?php if ($role === 'admin'): ?>
         <div class="pt-2 mt-2 border-t border-slate-700">
