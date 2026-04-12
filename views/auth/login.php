@@ -49,9 +49,7 @@
                 </button>
             </form>
 
-            <p class="text-center text-slate-500 text-xs mt-6">
-                Default: admin@helpdesk.com / password
-            </p>
+
         </div>
     </div>
 </body>
