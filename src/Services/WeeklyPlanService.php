@@ -18,6 +18,11 @@ class WeeklyPlanService
         return $this->planRepo->findAll($filters);
     }
 
+    public function getDistinctWeeks(): array
+    {
+        return $this->planRepo->getDistinctWeeks();
+    }
+
     public function getById(int $id): ?array
     {
         $plan = $this->planRepo->findById($id);
@@ -54,9 +59,9 @@ class WeeklyPlanService
         return $this->planRepo->delete($id);
     }
 
-    public function addTask(int $planId, string $title): bool
+    public function addTask(int $planId, string $title, ?int $assignedTo = null): bool
     {
-        return $this->planRepo->addTask($planId, $title) > 0;
+        return $this->planRepo->addTask($planId, $title, $assignedTo) > 0;
     }
 
     public function toggleTask(int $taskId): bool
@@ -65,8 +70,21 @@ class WeeklyPlanService
         if (!$task) {
             return false;
         }
-        $newStatus = $task['status'] === 'done' ? 'not_done' : 'done';
-        $result = $this->planRepo->updateTask($taskId, $newStatus);
+        $newStatus = $task['status'] === 'done' ? 'pending' : 'done';
+        $result = $this->planRepo->updateTask($taskId, $newStatus, $task['assigned_to'] ?? null);
+        if ($result) {
+            $this->recalculateProgress((int)$task['plan_id']);
+        }
+        return $result;
+    }
+
+    public function updateTask(int $taskId, string $status, ?int $assignedTo): bool
+    {
+        $task = $this->planRepo->findTaskById($taskId);
+        if (!$task) {
+            return false;
+        }
+        $result = $this->planRepo->updateTask($taskId, $status, $assignedTo);
         if ($result) {
             $this->recalculateProgress((int)$task['plan_id']);
         }

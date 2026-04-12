@@ -34,11 +34,23 @@ class WeeklyPlanRepository
             $sql .= ' AND wp.assigned_to = ?';
             $params[] = $filters['assigned_to'];
         }
+        if (!empty($filters['week_start'])) {
+            $sql .= ' AND wp.week_start = ?';
+            $params[] = $filters['week_start'];
+        }
 
         $sql .= ' ORDER BY wp.week_start DESC';
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    public function getDistinctWeeks(): array
+    {
+        $stmt = $this->db->query(
+            'SELECT DISTINCT week_start FROM weekly_plans ORDER BY week_start DESC'
+        );
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
     public function findById(int $id): ?array
@@ -103,24 +115,32 @@ class WeeklyPlanRepository
         return $stmt->execute([$id]);
     }
 
-    public function addTask(int $planId, string $title): int
+    public function addTask(int $planId, string $title, ?int $assignedTo = null): int
     {
         $stmt = $this->db->prepare(
-            'INSERT INTO weekly_tasks (plan_id, title, status) VALUES (?, ?, ?)'
+            'INSERT INTO weekly_tasks (plan_id, title, assigned_to, status) VALUES (?, ?, ?, ?)'
         );
-        $stmt->execute([$planId, $title, 'not_done']);
+        $stmt->execute([$planId, $title, $assignedTo, 'pending']);
         return (int)$this->db->lastInsertId();
     }
 
-    public function updateTask(int $taskId, string $status): bool
+    public function updateTask(int $taskId, string $status, ?int $assignedTo = null): bool
     {
-        $stmt = $this->db->prepare('UPDATE weekly_tasks SET status = ? WHERE id = ?');
-        return $stmt->execute([$status, $taskId]);
+        $stmt = $this->db->prepare(
+            'UPDATE weekly_tasks SET status = ?, assigned_to = ? WHERE id = ?'
+        );
+        return $stmt->execute([$status, $assignedTo, $taskId]);
     }
 
     public function getTasksByPlanId(int $planId): array
     {
-        $stmt = $this->db->prepare('SELECT * FROM weekly_tasks WHERE plan_id = ? ORDER BY id ASC');
+        $stmt = $this->db->prepare(
+            'SELECT wt.*, u.name as assignee_name
+             FROM weekly_tasks wt
+             LEFT JOIN users u ON wt.assigned_to = u.id
+             WHERE wt.plan_id = ?
+             ORDER BY wt.id ASC'
+        );
         $stmt->execute([$planId]);
         return $stmt->fetchAll();
     }

@@ -77,6 +77,7 @@ $router->get('/weekly-plan', [WeeklyPlanController::class, 'index'], [AuthMiddle
 $router->get('/weekly-plan/create', [WeeklyPlanController::class, 'create'], [AuthMiddleware::class]);
 $router->post('/weekly-plan/store', [WeeklyPlanController::class, 'store'], [AuthMiddleware::class]);
 $router->post('/weekly-plan/task/toggle', [WeeklyPlanController::class, 'toggleTask'], [AuthMiddleware::class]);
+$router->post('/weekly-plan/task/{taskId}/update', [WeeklyPlanController::class, 'updateTask'], [AuthMiddleware::class]);
 $router->post('/weekly-plan/import-excel', [WeeklyPlanController::class, 'importExcel'], [AuthMiddleware::class]);
 $router->get('/weekly-plan/{id}', [WeeklyPlanController::class, 'show'], [AuthMiddleware::class]);
 $router->post('/weekly-plan/{id}/task', [WeeklyPlanController::class, 'addTask'], [AuthMiddleware::class]);
