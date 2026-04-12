@@ -5,6 +5,11 @@ $statusColors = [
     'in_progress' => 'bg-yellow-900/50 text-yellow-300 border-yellow-700',
     'completed'   => 'bg-green-900/50 text-green-300 border-green-700',
 ];
+$statusLabels = [
+    'pending'     => 'Pendiente',
+    'in_progress' => 'En progreso',
+    'completed'   => 'Completado',
+];
 
 // Build a color map keyed by project name
 $projectColorMap = [];
@@ -86,13 +91,13 @@ foreach ($projects as $p) {
                 </div>
             </div>
 
-            <!-- Filters -->
+            <!-- Filtros -->
             <div class="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-6">
                 <form method="GET" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan" class="flex flex-wrap gap-3 items-end">
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Project</label>
+                        <label class="block text-xs text-slate-400 mb-1">Proyecto</label>
                         <select name="project" class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                            <option value="">All Projects</option>
+                            <option value="">Todos los proyectos</option>
                             <?php foreach ($projects as $p): ?>
                             <option value="<?= htmlspecialchars($p['name']) ?>" <?= ($filters['project'] ?? '') === $p['name'] ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($p['name']) ?>
@@ -101,18 +106,18 @@ foreach ($projects as $p) {
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Status</label>
+                        <label class="block text-xs text-slate-400 mb-1">Estado</label>
                         <select name="status" class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                            <option value="">All Status</option>
-                            <?php foreach (['pending', 'in_progress', 'completed'] as $s): ?>
-                            <option value="<?= $s ?>" <?= ($filters['status'] ?? '') === $s ? 'selected' : '' ?>><?= ucfirst(str_replace('_', ' ', $s)) ?></option>
-                            <?php endforeach; ?>
+                            <option value="">Todos los estados</option>
+                            <option value="pending" <?= ($filters['status'] ?? '') === 'pending' ? 'selected' : '' ?>>Pendiente</option>
+                            <option value="in_progress" <?= ($filters['status'] ?? '') === 'in_progress' ? 'selected' : '' ?>>En progreso</option>
+                            <option value="completed" <?= ($filters['status'] ?? '') === 'completed' ? 'selected' : '' ?>>Completado</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Developer</label>
+                        <label class="block text-xs text-slate-400 mb-1">Desarrollador</label>
                         <select name="assigned_to" class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                            <option value="">All Developers</option>
+                            <option value="">Todos los desarrolladores</option>
                             <?php foreach ($developers as $dev): ?>
                             <option value="<?= htmlspecialchars((string)$dev['id']) ?>" <?= ($filters['assigned_to'] ?? '') == $dev['id'] ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($dev['name']) ?>
@@ -120,8 +125,13 @@ foreach ($projects as $p) {
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">Filter</button>
-                    <a href="<?= htmlspecialchars($appUrl) ?>/weekly-plan" class="text-slate-400 hover:text-white text-sm px-3 py-2">Clear</a>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Semana</label>
+                        <input type="date" name="week_start" value="<?= htmlspecialchars($filters['week_start'] ?? '') ?>"
+                               class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">Filtrar</button>
+                    <a href="<?= htmlspecialchars($appUrl) ?>/weekly-plan" class="text-slate-400 hover:text-white text-sm px-3 py-2">Limpiar</a>
                 </form>
             </div>
 
@@ -150,7 +160,7 @@ foreach ($projects as $p) {
                                     <?= htmlspecialchars($plan['project']) ?>
                                 </span>
                                 <span class="text-xs px-2 py-0.5 rounded border <?= $statusColors[$plan['status']] ?? 'bg-slate-700 text-slate-300 border-slate-600' ?>">
-                                    <?= htmlspecialchars(str_replace('_', ' ', $plan['status'])) ?>
+                                    <?= $statusLabels[$plan['status']] ?? htmlspecialchars(str_replace('_', ' ', $plan['status'])) ?>
                                 </span>
                             </div>
                             <p class="text-white font-semibold">Week of <?= htmlspecialchars(date('M j, Y', strtotime($plan['week_start']))) ?></p>

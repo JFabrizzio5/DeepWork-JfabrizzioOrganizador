@@ -1,9 +1,14 @@
 <?php
-$pageTitle = 'Weekly Plan — Week of ' . date('M j, Y', strtotime($plan['week_start'] ?? 'now'));
+$pageTitle = 'Plan Semanal — Semana del ' . date('d/m/Y', strtotime($plan['week_start'] ?? 'now'));
 $statusColors = [
     'pending'     => 'bg-slate-700 text-slate-300 border-slate-600',
     'in_progress' => 'bg-yellow-900/50 text-yellow-300 border-yellow-700',
     'completed'   => 'bg-green-900/50 text-green-300 border-green-700',
+];
+$planStatusLabels = [
+    'pending'     => 'Pendiente',
+    'in_progress' => 'En progreso',
+    'completed'   => 'Completado',
 ];
 
 // Find badge color from projects list
@@ -79,18 +84,18 @@ foreach ($projects as $p) {
                                     <?= htmlspecialchars($plan['project']) ?>
                                 </span>
                                 <span class="text-xs px-3 py-1 rounded border <?= $statusColors[$plan['status']] ?? '' ?>">
-                                    <?= htmlspecialchars(str_replace('_', ' ', ucfirst($plan['status']))) ?>
+                                    <?= $planStatusLabels[$plan['status']] ?? htmlspecialchars(str_replace('_', ' ', ucfirst($plan['status']))) ?>
                                 </span>
                             </div>
-                            <h2 class="text-xl font-bold text-white">Week of <?= htmlspecialchars(date('F j, Y', strtotime($plan['week_start']))) ?></h2>
+                            <h2 class="text-xl font-bold text-white">Semana del <?= htmlspecialchars(date('d/m/Y', strtotime($plan['week_start']))) ?></h2>
                             <p class="text-slate-400 text-sm mt-1">
-                                Assigned to: <strong class="text-slate-300"><?= htmlspecialchars($plan['assigned_name'] ?? 'Unassigned') ?></strong>
-                                · Created by: <?= htmlspecialchars($plan['creator_name'] ?? 'Unknown') ?>
+                                Asignado a: <strong class="text-slate-300"><?= htmlspecialchars($plan['assigned_name'] ?? 'Sin asignar') ?></strong>
+                                · Creado por: <?= htmlspecialchars($plan['creator_name'] ?? 'Desconocido') ?>
                             </p>
                         </div>
                         <div class="text-right">
                             <p class="text-3xl font-bold text-white"><?= htmlspecialchars((string)$plan['progress_percent']) ?>%</p>
-                            <p class="text-xs text-slate-500">complete</p>
+                            <p class="text-xs text-slate-500">completado</p>
                         </div>
                     </div>
 
@@ -120,66 +125,116 @@ foreach ($projects as $p) {
                     <?php endif; ?>
                 </div>
 
+<?php
+$taskStatusColors = [
+    'pending'     => 'bg-slate-700 text-slate-300 border-slate-600',
+    'in_progress' => 'bg-yellow-900/50 text-yellow-300 border-yellow-700',
+    'done'        => 'bg-green-900/50 text-green-300 border-green-700',
+];
+$taskStatusLabels = [
+    'pending'     => 'Pendiente',
+    'in_progress' => 'En progreso',
+    'done'        => 'Hecho',
+];
+?>
                 <!-- Tasks -->
                 <div class="bg-slate-800 rounded-xl border border-slate-700 p-6 mb-6">
                     <h3 class="text-lg font-semibold text-white mb-4">
-                        Tasks
+                        Tareas
                         <span class="text-slate-400 text-sm font-normal">
-                            (<?= count(array_filter($plan['tasks'] ?? [], fn($t) => $t['status'] === 'done')) ?>/<?= count($plan['tasks'] ?? []) ?> done)
+                            (<?= count(array_filter($plan['tasks'] ?? [], fn($t) => $t['status'] === 'done')) ?>/<?= count($plan['tasks'] ?? []) ?> hechas)
                         </span>
                     </h3>
 
                     <?php if (empty($plan['tasks'])): ?>
-                    <p class="text-slate-500 text-sm">No tasks yet.</p>
+                    <p class="text-slate-500 text-sm">No hay tareas aún.</p>
                     <?php else: ?>
-                    <ul class="space-y-2 mb-4" id="task-list">
+                    <div class="space-y-2 mb-4" id="task-list">
                         <?php foreach ($plan['tasks'] as $task): ?>
-                        <li class="flex items-center gap-3 bg-slate-900/50 rounded-lg px-4 py-3">
-                            <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
-                            <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/task/toggle" class="flex-shrink-0">
-                                <input type="hidden" name="task_id" value="<?= htmlspecialchars((string)$task['id']) ?>">
-                                <input type="hidden" name="plan_id" value="<?= htmlspecialchars((string)$plan['id']) ?>">
-                                <button type="submit"
-                                        class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
-                                               <?= $task['status'] === 'done' ? 'bg-green-600 border-green-600' : 'border-slate-500 hover:border-blue-500' ?>">
-                                    <?php if ($task['status'] === 'done'): ?>
-                                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                                    </svg>
-                                    <?php endif; ?>
+                        <div class="bg-slate-900/50 rounded-lg px-4 py-3">
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <span class="text-sm flex-1 min-w-0 <?= $task['status'] === 'done' ? 'line-through text-slate-500' : 'text-slate-200' ?>">
+                                    <?= htmlspecialchars($task['title']) ?>
+                                </span>
+                                <span class="text-xs px-2 py-0.5 rounded border <?= $taskStatusColors[$task['status']] ?? 'bg-slate-700 text-slate-300 border-slate-600' ?>">
+                                    <?= $taskStatusLabels[$task['status']] ?? htmlspecialchars($task['status']) ?>
+                                </span>
+                                <?php if (!empty($task['assigned_name'])): ?>
+                                <span class="text-xs text-slate-400 whitespace-nowrap">
+                                    👤 <?= htmlspecialchars($task['assigned_name']) ?>
+                                </span>
+                                <?php else: ?>
+                                <span class="text-xs text-slate-600 whitespace-nowrap">General</span>
+                                <?php endif; ?>
+                                <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
+                                <button type="button"
+                                        onclick="openTaskEdit(<?= (int)$task['id'] ?>, <?= (int)$plan['id'] ?>, '<?= htmlspecialchars($task['status']) ?>', <?= $task['assigned_to'] ? (int)$task['assigned_to'] : 'null' ?>)"
+                                        class="text-xs text-slate-500 hover:text-blue-400 transition-colors ml-auto flex-shrink-0">
+                                    Editar
                                 </button>
-                            </form>
-                            <?php else: ?>
-                            <div class="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0
-                                        <?= $task['status'] === 'done' ? 'bg-green-600 border-green-600' : 'border-slate-500' ?>">
-                                <?php if ($task['status'] === 'done'): ?>
-                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                                </svg>
                                 <?php endif; ?>
                             </div>
-                            <?php endif; ?>
-                            <span class="text-sm flex-1 <?= $task['status'] === 'done' ? 'line-through text-slate-500' : 'text-slate-300' ?>">
-                                <?= htmlspecialchars($task['title']) ?>
-                            </span>
-                        </li>
+                        </div>
                         <?php endforeach; ?>
-                    </ul>
+                    </div>
                     <?php endif; ?>
 
                     <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
-                    <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/<?= htmlspecialchars((string)$plan['id']) ?>/task" class="flex gap-2 mt-4">
-                        <input type="text" name="title" required placeholder="Add a task..."
-                               class="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 text-sm">
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">Add Task</button>
+                    <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/<?= htmlspecialchars((string)$plan['id']) ?>/task" class="mt-4 space-y-2">
+                        <div class="flex gap-2 flex-wrap">
+                            <input type="text" name="title" required placeholder="Nueva tarea..."
+                                   class="flex-1 min-w-0 bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 text-sm">
+                            <select name="assigned_to" class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                                <option value="">General</option>
+                                <?php foreach ($allUsers as $u): ?>
+                                <option value="<?= htmlspecialchars((string)$u['id']) ?>"><?= htmlspecialchars($u['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">Agregar</button>
+                        </div>
                     </form>
                     <?php endif; ?>
                 </div>
 
+                <!-- Task Edit Modal -->
+                <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
+                <div id="task-edit-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-sm mx-4">
+                        <h3 class="text-lg font-semibold text-white mb-4">Actualizar tarea</h3>
+                        <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/task/update-status">
+                            <input type="hidden" name="task_id" id="modal-task-id">
+                            <input type="hidden" name="plan_id" value="<?= htmlspecialchars((string)$plan['id']) ?>">
+                            <div class="mb-4">
+                                <label class="block text-sm text-slate-300 mb-1">Estado</label>
+                                <select name="status" id="modal-status" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm">
+                                    <option value="pending">Pendiente</option>
+                                    <option value="in_progress">En progreso</option>
+                                    <option value="done">Hecho</option>
+                                </select>
+                            </div>
+                            <div class="mb-5">
+                                <label class="block text-sm text-slate-300 mb-1">Asignado a</label>
+                                <select name="assigned_to" id="modal-assigned" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm">
+                                    <option value="">General</option>
+                                    <?php foreach ($allUsers as $u): ?>
+                                    <option value="<?= htmlspecialchars((string)$u['id']) ?>"><?= htmlspecialchars($u['name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="flex gap-3">
+                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-5 py-2 rounded-lg transition-colors">Guardar</button>
+                                <button type="button" onclick="closeTaskEdit()" class="text-slate-400 hover:text-white text-sm px-4 py-2 transition-colors">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <!-- Update Status -->
                 <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
                 <div class="bg-slate-800 rounded-xl border border-slate-700 p-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">Update Plan Status</h3>
+                    <h3 class="text-lg font-semibold text-white mb-4">Actualizar estado del plan</h3>
+                    <?php $planStatusLabels = ['pending' => 'Pendiente', 'in_progress' => 'En progreso', 'completed' => 'Completado']; ?>
                     <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/<?= htmlspecialchars((string)$plan['id']) ?>/status" class="flex gap-3 flex-wrap">
                         <?php foreach (['pending', 'in_progress', 'completed'] as $s): ?>
                         <button type="submit" name="status" value="<?= $s ?>"
@@ -187,7 +242,7 @@ foreach ($projects as $p) {
                                        <?= $plan['status'] === $s
                                            ? 'bg-blue-600 text-white border-blue-500'
                                            : 'border-slate-600 text-slate-400 hover:border-blue-500 hover:text-white' ?>">
-                            <?= ucfirst(str_replace('_', ' ', $s)) ?>
+                            <?= $planStatusLabels[$s] ?>
                         </button>
                         <?php endforeach; ?>
                     </form>
@@ -209,6 +264,20 @@ const planData = <?= json_encode([
     'summary'      => $plan['summary'] ?? '',
     'tasks'        => array_map(fn($t) => ['title' => $t['title'], 'status' => $t['status']], $plan['tasks'] ?? []),
 ]) ?>;
+
+function openTaskEdit(taskId, planId, status, assignedTo) {
+    document.getElementById('modal-task-id').value = taskId;
+    document.getElementById('modal-status').value = status;
+    const assignedSelect = document.getElementById('modal-assigned');
+    if (assignedSelect) {
+        assignedSelect.value = assignedTo !== null ? assignedTo : '';
+    }
+    document.getElementById('task-edit-modal').classList.remove('hidden');
+}
+
+function closeTaskEdit() {
+    document.getElementById('task-edit-modal').classList.add('hidden');
+}
 
 function exportPlanExcel() {
     const rows = [['Week Start', 'Project', 'Status', 'Assigned To', 'Progress %', 'Summary']];
