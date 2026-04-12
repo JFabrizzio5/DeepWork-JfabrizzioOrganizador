@@ -16,10 +16,12 @@ class TicketRepository
     public function findById(int $id): ?array
     {
         $stmt = $this->db->prepare(
-            'SELECT t.*, u.name as requester_user_name, a.name as assigned_name 
-             FROM tickets t 
-             LEFT JOIN users u ON t.user_id = u.id 
-             LEFT JOIN users a ON t.assigned_to = a.id 
+            'SELECT t.*, u.name as requester_user_name, u.is_vip as requester_is_vip, u.highlight_color as requester_highlight_color,
+                    a.name as assigned_name, s.nombre as sucursal_nombre
+             FROM tickets t
+             LEFT JOIN users u ON t.user_id = u.id
+             LEFT JOIN users a ON t.assigned_to = a.id
+             LEFT JOIN sucursales s ON t.sucursal_id = s.id
              WHERE t.id = ?'
         );
         $stmt->execute([$id]);
@@ -29,10 +31,12 @@ class TicketRepository
 
     public function findAll(array $filters = []): array
     {
-        $sql = 'SELECT t.*, u.name as requester_user_name, a.name as assigned_name 
-                FROM tickets t 
-                LEFT JOIN users u ON t.user_id = u.id 
-                LEFT JOIN users a ON t.assigned_to = a.id 
+        $sql = 'SELECT t.*, u.name as requester_user_name, u.is_vip as requester_is_vip, u.highlight_color as requester_highlight_color,
+                       a.name as assigned_name, s.nombre as sucursal_nombre
+                FROM tickets t
+                LEFT JOIN users u ON t.user_id = u.id
+                LEFT JOIN users a ON t.assigned_to = a.id
+                LEFT JOIN sucursales s ON t.sucursal_id = s.id
                 WHERE 1=1';
         $params = [];
 
@@ -48,8 +52,31 @@ class TicketRepository
             $sql .= ' AND t.impact = ?';
             $params[] = $filters['impact'];
         }
+        if (!empty($filters['escalation'])) {
+            $sql .= ' AND t.escalation = ?';
+            $params[] = $filters['escalation'];
+        }
+        if (isset($filters['is_resolved']) && $filters['is_resolved'] !== '') {
+            $sql .= ' AND t.is_resolved = ?';
+            $params[] = (int)$filters['is_resolved'];
+        }
+        if (!empty($filters['sucursal_id'])) {
+            $sql .= ' AND t.sucursal_id = ?';
+            $params[] = (int)$filters['sucursal_id'];
+        }
+        if (!empty($filters['date_from'])) {
+            $sql .= ' AND DATE(t.created_at) >= ?';
+            $params[] = $filters['date_from'];
+        }
+        if (!empty($filters['date_to'])) {
+            $sql .= ' AND DATE(t.created_at) <= ?';
+            $params[] = $filters['date_to'];
+        }
+        if (!empty($filters['highlighted'])) {
+            $sql .= ' AND u.is_vip = 1';
+        }
 
-        $sql .= ' ORDER BY t.created_at DESC';
+        $sql .= ' ORDER BY u.is_vip DESC, t.created_at DESC';
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -59,10 +86,13 @@ class TicketRepository
     public function findByUserId(int $userId): array
     {
         $stmt = $this->db->prepare(
-            'SELECT t.*, a.name as assigned_name 
-             FROM tickets t 
-             LEFT JOIN users a ON t.assigned_to = a.id 
-             WHERE t.user_id = ? 
+            'SELECT t.*, a.name as assigned_name, s.nombre as sucursal_nombre,
+                    u.is_vip as requester_is_vip, u.highlight_color as requester_highlight_color
+             FROM tickets t
+             LEFT JOIN users a ON t.assigned_to = a.id
+             LEFT JOIN sucursales s ON t.sucursal_id = s.id
+             LEFT JOIN users u ON t.user_id = u.id
+             WHERE t.user_id = ?
              ORDER BY t.created_at DESC'
         );
         $stmt->execute([$userId]);
@@ -85,9 +115,9 @@ class TicketRepository
     public function create(array $data): int
     {
         $stmt = $this->db->prepare(
-            'INSERT INTO tickets 
-             (title, description, type, impact, priority_user, status, phase, steps_to_reproduce, technical_context, requester_name, requester_email, user_id, assigned_to)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO tickets
+             (title, description, type, impact, priority_user, status, phase, steps_to_reproduce, technical_context, requester_name, requester_email, user_id, assigned_to, escalation, is_resolved, sucursal_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $data['title'] ?? null,
@@ -103,6 +133,9 @@ class TicketRepository
             $data['requester_email'],
             $data['user_id'] ?? null,
             $data['assigned_to'] ?? null,
+            $data['escalation'] ?? 'none',
+            $data['is_resolved'] ?? 0,
+            $data['sucursal_id'] ?? null,
         ]);
         return (int)$this->db->lastInsertId();
     }
