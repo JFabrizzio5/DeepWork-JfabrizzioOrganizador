@@ -47,4 +47,18 @@ class UserService
     {
         return $this->userRepo->findByRole('dev');
     }
+
+    public function setHighlight(int $id, int $isVip, string $color): bool
+    {
+        return $this->userRepo->setHighlight($id, $isVip, $color);
+    }
+
+    public function getAllUsers(): array
+    {
+        return array_merge(
+            $this->userRepo->findByRole('admin'),
+            $this->userRepo->findByRole('dev'),
+            $this->userRepo->findByRole('user')
+        );
+    }
 }

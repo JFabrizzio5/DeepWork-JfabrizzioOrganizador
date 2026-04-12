@@ -75,4 +75,10 @@ class UserRepository
         $stmt = $this->db->prepare('DELETE FROM users WHERE id = ?');
         return $stmt->execute([$id]);
     }
+
+    public function setHighlight(int $id, int $isVip, string $color): bool
+    {
+        $stmt = $this->db->prepare('UPDATE users SET is_vip = ?, highlight_color = ? WHERE id = ?');
+        return $stmt->execute([$isVip, $color, $id]);
+    }
 }

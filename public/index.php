@@ -45,6 +45,8 @@ $router->get('/tickets/create', [TicketController::class, 'create'], [AuthMiddle
 $router->post('/tickets/store', [TicketController::class, 'store'], [AuthMiddleware::class]);
 $router->get('/tickets/{id}', [TicketController::class, 'show'], [AuthMiddleware::class]);
 $router->post('/tickets/{id}/status', [TicketController::class, 'updateStatus'], [AuthMiddleware::class]);
+$router->post('/tickets/{id}/escalation', [TicketController::class, 'updateEscalation'], [AuthMiddleware::class]);
+$router->post('/tickets/{id}/toggle-resolved', [TicketController::class, 'toggleResolved'], [AuthMiddleware::class]);
 $router->post('/tickets/{id}/note', [TicketController::class, 'addNote'], [AuthMiddleware::class]);
 $router->post('/tickets/{id}/assign', [TicketController::class, 'assign'], [AuthMiddleware::class]);
 $router->get('/tickets/{id}/evidence/{evidenceId}', [TicketController::class, 'serveEvidence'], [AuthMiddleware::class]);
@@ -54,7 +56,14 @@ $router->get('/admin/users', [AdminController::class, 'users'], [AuthMiddleware:
 $router->get('/admin/users/create', [AdminController::class, 'createUser'], [AuthMiddleware::class]);
 $router->post('/admin/users/store', [AdminController::class, 'storeUser'], [AuthMiddleware::class]);
 $router->post('/admin/users/{id}/delete', [AdminController::class, 'deleteUser'], [AuthMiddleware::class]);
+$router->post('/admin/users/{id}/highlight', [AdminController::class, 'updateUserHighlight'], [AuthMiddleware::class]);
+$router->post('/admin/users/{id}/sucursales', [AdminController::class, 'updateUserSucursales'], [AuthMiddleware::class]);
 $router->get('/admin/weekly-dashboard', [AdminController::class, 'weeklyDashboard'], [AuthMiddleware::class]);
+
+// Sucursal management (admin only)
+$router->get('/admin/sucursales', [AdminController::class, 'sucursales'], [AuthMiddleware::class]);
+$router->post('/admin/sucursales/store', [AdminController::class, 'storeSucursal'], [AuthMiddleware::class]);
+$router->post('/admin/sucursales/{id}/delete', [AdminController::class, 'deleteSucursal'], [AuthMiddleware::class]);
 
 // Project management (admin only)
 $router->get('/admin/projects', [ProjectController::class, 'index'], [AuthMiddleware::class]);
