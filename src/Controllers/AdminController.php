@@ -5,6 +5,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Services\UserService;
+use App\Services\WeeklyPlanService;
 use App\Repositories\ApiKeyRepository;
 
 class AdminController
@@ -155,6 +156,34 @@ class AdminController
 
         Session::flash('success', 'API key deleted.');
         Response::redirect($_ENV['APP_URL'] . '/admin/api-keys');
+    }
+
+    public function weeklyDashboard(): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/tickets/list');
+        }
+
+        $planService  = new WeeklyPlanService();
+        $summaries    = $planService->getWeekSummaries(12);
+        $recentPlans  = $planService->findRecentPlans(8);
+
+        // Group recent plans by week_start
+        $byWeek = [];
+        foreach ($recentPlans as $plan) {
+            $byWeek[$plan['week_start']][] = $plan;
+        }
+        krsort($byWeek);
+
+        Response::view('admin/weekly_dashboard', [
+            'appUrl'      => $_ENV['APP_URL'],
+            'user'        => $currentUser,
+            'summaries'   => $summaries,
+            'byWeek'      => $byWeek,
+            'success'     => Session::getFlash('success'),
+            'error'       => Session::getFlash('error'),
+        ]);
     }
 
     private function getCurrentUser(): array

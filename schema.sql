@@ -70,7 +70,7 @@ CREATE TABLE knowledge_base (
 CREATE TABLE weekly_plans (
   id INT AUTO_INCREMENT PRIMARY KEY,
   week_start DATE NOT NULL,
-  project ENUM('A','B','C','D') DEFAULT 'A',
+  project VARCHAR(100) NOT NULL DEFAULT 'Project A',
   summary TEXT,
   assigned_to INT,
   status ENUM('pending','in_progress','completed') DEFAULT 'pending',
@@ -91,9 +91,26 @@ CREATE TABLE weekly_tasks (
   FOREIGN KEY (plan_id) REFERENCES weekly_plans(id) ON DELETE CASCADE
 );
 
+CREATE TABLE projects (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  color VARCHAR(7) NOT NULL DEFAULT '#3B82F6',
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Default projects
+INSERT INTO projects (name, color, description) VALUES
+('Project A', '#3B82F6', 'Default project A'),
+('Project B', '#8B5CF6', 'Default project B'),
+('Project C', '#10B981', 'Default project C'),
+('Project D', '#F59E0B', 'Default project D');
+
 -- Default admin user (password: password)
 INSERT INTO users (name, email, password, role) VALUES 
-('Admin', 'admin@helpdesk.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+('Admin', 'admin@helpdesk.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
+-- Fabrizzio admin user (password: fabrizzio)
+('Fabrizzio', 'fabrizzio@fabrizzio.com', '$2y$10$wH7QiIUNTopW14eHuaRCVOJW6kIlodq3OW9Pf6WlBlAxEvPoXndKm', 'admin');
 
 -- ─────────────────────────────────────────────────────────
 -- API Keys (for REST API authentication)

@@ -14,6 +14,7 @@ use App\Controllers\AdminController;
 use App\Controllers\KnowledgeBaseController;
 use App\Controllers\WeeklyPlanController;
 use App\Controllers\ApiController;
+use App\Controllers\ProjectController;
 use App\Middleware\ApiKeyMiddleware;
 
 // Load .env
@@ -53,6 +54,15 @@ $router->get('/admin/users', [AdminController::class, 'users'], [AuthMiddleware:
 $router->get('/admin/users/create', [AdminController::class, 'createUser'], [AuthMiddleware::class]);
 $router->post('/admin/users/store', [AdminController::class, 'storeUser'], [AuthMiddleware::class]);
 $router->post('/admin/users/{id}/delete', [AdminController::class, 'deleteUser'], [AuthMiddleware::class]);
+$router->get('/admin/weekly-dashboard', [AdminController::class, 'weeklyDashboard'], [AuthMiddleware::class]);
+
+// Project management (admin only)
+$router->get('/admin/projects', [ProjectController::class, 'index'], [AuthMiddleware::class]);
+$router->get('/admin/projects/create', [ProjectController::class, 'create'], [AuthMiddleware::class]);
+$router->post('/admin/projects/store', [ProjectController::class, 'store'], [AuthMiddleware::class]);
+$router->get('/admin/projects/{id}/edit', [ProjectController::class, 'edit'], [AuthMiddleware::class]);
+$router->post('/admin/projects/{id}/update', [ProjectController::class, 'update'], [AuthMiddleware::class]);
+$router->post('/admin/projects/{id}/delete', [ProjectController::class, 'delete'], [AuthMiddleware::class]);
 
 // Knowledge Base routes (specific before parametric)
 $router->get('/knowledge', [KnowledgeBaseController::class, 'index'], [AuthMiddleware::class]);
@@ -67,8 +77,11 @@ $router->get('/weekly-plan', [WeeklyPlanController::class, 'index'], [AuthMiddle
 $router->get('/weekly-plan/create', [WeeklyPlanController::class, 'create'], [AuthMiddleware::class]);
 $router->post('/weekly-plan/store', [WeeklyPlanController::class, 'store'], [AuthMiddleware::class]);
 $router->post('/weekly-plan/task/toggle', [WeeklyPlanController::class, 'toggleTask'], [AuthMiddleware::class]);
+$router->post('/weekly-plan/import-excel', [WeeklyPlanController::class, 'importExcel'], [AuthMiddleware::class]);
 $router->get('/weekly-plan/{id}', [WeeklyPlanController::class, 'show'], [AuthMiddleware::class]);
 $router->post('/weekly-plan/{id}/task', [WeeklyPlanController::class, 'addTask'], [AuthMiddleware::class]);
+$router->post('/weekly-plan/{id}/status', [WeeklyPlanController::class, 'updateStatus'], [AuthMiddleware::class]);
+$router->post('/weekly-plan/{id}/copy-next-week', [WeeklyPlanController::class, 'copyToNextWeek'], [AuthMiddleware::class]);
 $router->post('/weekly-plan/{id}/delete', [WeeklyPlanController::class, 'delete'], [AuthMiddleware::class]);
 
 // ─────────────────────────────────────────────────────────

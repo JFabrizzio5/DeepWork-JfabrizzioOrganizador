@@ -84,4 +84,50 @@ class WeeklyPlanService
         $percent = (int)round(($done / count($tasks)) * 100);
         $this->planRepo->update($planId, ['progress_percent' => $percent]);
     }
+
+    public function copyToNextWeek(int $planId, int $userId): int
+    {
+        $plan = $this->getById($planId);
+        if (!$plan) {
+            return 0;
+        }
+        $nextWeekStart = date('Y-m-d', strtotime($plan['week_start'] . ' +7 days'));
+
+        $newPlanId = $this->planRepo->create([
+            'week_start'      => $nextWeekStart,
+            'project'         => $plan['project'],
+            'summary'         => $plan['summary'],
+            'assigned_to'     => $plan['assigned_to'] ?? null,
+            'status'          => 'pending',
+            'progress_percent'=> 0,
+            'file_path'       => null,
+            'created_by'      => $userId,
+        ]);
+
+        foreach ($plan['tasks'] as $task) {
+            $this->planRepo->addTask($newPlanId, $task['title']);
+        }
+
+        return $newPlanId;
+    }
+
+    public function getWeekSummaries(int $limit = 10): array
+    {
+        return $this->planRepo->getWeekSummaries($limit);
+    }
+
+    public function findRecentPlans(int $weeks = 4): array
+    {
+        $plans = $this->planRepo->findRecentPlans($weeks);
+        foreach ($plans as &$plan) {
+            $plan['tasks'] = $this->planRepo->getTasksByPlanId((int)$plan['id']);
+        }
+        unset($plan);
+        return $plans;
+    }
+
+    public function updateStatus(int $id, string $status): bool
+    {
+        return $this->planRepo->update($id, ['status' => $status]);
+    }
 }
