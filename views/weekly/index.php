@@ -109,9 +109,11 @@ foreach ($projects as $p) {
                         <label class="block text-xs text-slate-400 mb-1">Estado</label>
                         <select name="status" class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                             <option value="">Todos los estados</option>
-                            <option value="pending" <?= ($filters['status'] ?? '') === 'pending' ? 'selected' : '' ?>>Pendiente</option>
-                            <option value="in_progress" <?= ($filters['status'] ?? '') === 'in_progress' ? 'selected' : '' ?>>En progreso</option>
-                            <option value="completed" <?= ($filters['status'] ?? '') === 'completed' ? 'selected' : '' ?>>Completado</option>
+                            <?php
+                            $statusLabels = ['pending' => 'Pendiente', 'in_progress' => 'En progreso', 'completed' => 'Completado'];
+                            foreach ($statusLabels as $val => $label): ?>
+                            <option value="<?= $val ?>" <?= ($filters['status'] ?? '') === $val ? 'selected' : '' ?>><?= $label ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     <div>
@@ -127,8 +129,14 @@ foreach ($projects as $p) {
                     </div>
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Semana</label>
-                        <input type="date" name="week_start" value="<?= htmlspecialchars($filters['week_start'] ?? '') ?>"
-                               class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                        <select name="week_start" class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="">Todas las semanas</option>
+                            <?php foreach ($weeks as $w): ?>
+                            <option value="<?= htmlspecialchars($w) ?>" <?= ($filters['week_start'] ?? '') === $w ? 'selected' : '' ?>>
+                                <?= htmlspecialchars(date('d M Y', strtotime($w))) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">Filtrar</button>
                     <a href="<?= htmlspecialchars($appUrl) ?>/weekly-plan" class="text-slate-400 hover:text-white text-sm px-3 py-2">Limpiar</a>

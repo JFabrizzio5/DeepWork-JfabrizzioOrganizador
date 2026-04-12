@@ -35,6 +35,7 @@ class WeeklyPlanController
         $plans      = $this->planService->getAll($filters);
         $developers = $this->userService->getDevelopers();
         $projects   = $this->projectService->getAll();
+        $weeks      = $this->planService->getDistinctWeeks();
 
         Response::view('weekly/index', [
             'appUrl'     => $_ENV['APP_URL'],
@@ -43,6 +44,7 @@ class WeeklyPlanController
             'filters'    => $filters,
             'developers' => $developers,
             'projects'   => $projects,
+            'weeks'      => $weeks,
             'success'    => Session::getFlash('success'),
             'error'      => Session::getFlash('error'),
         ]);
@@ -151,10 +153,37 @@ class WeeklyPlanController
         }
 
         $assignedTo = $this->request->post('assigned_to', null) ?: null;
-        $this->planService->addTask((int)$id, $title, $assignedTo ? (int)$assignedTo : null);
+
+        $this->planService->addTask((int)$id, $title, $assignedTo !== null ? (int)$assignedTo : null);
         $this->planService->recalculateProgress((int)$id);
         Session::flash('success', 'Task added.');
         Response::redirect($_ENV['APP_URL'] . '/weekly-plan/' . $id);
+    }
+
+    public function updateTask(string $taskId): void
+    {
+        $user = $this->getCurrentUser();
+        if (!in_array($user['role'], ['admin', 'dev'])) {
+            Response::abort(403, 'Access denied.');
+        }
+
+        $planId     = (int)$this->request->post('plan_id', 0);
+        $status     = $this->request->post('status', 'pending');
+        $assignedTo = $this->request->post('assigned_to', null) ?: null;
+        $allowed    = ['pending', 'in_progress', 'done'];
+
+        if (!in_array($status, $allowed)) {
+            Session::flash('error', 'Invalid status.');
+            Response::redirect($_ENV['APP_URL'] . '/weekly-plan/' . $planId);
+        }
+
+        $this->planService->updateTask(
+            (int)$taskId,
+            $status,
+            $assignedTo !== null ? (int)$assignedTo : null
+        );
+        Session::flash('success', 'Tarea actualizada.');
+        Response::redirect($_ENV['APP_URL'] . '/weekly-plan/' . $planId);
     }
 
     public function toggleTask(): void

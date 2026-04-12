@@ -18,6 +18,11 @@ class WeeklyPlanService
         return $this->planRepo->findAll($filters);
     }
 
+    public function getDistinctWeeks(): array
+    {
+        return $this->planRepo->getDistinctWeeks();
+    }
+
     public function getById(int $id): ?array
     {
         $plan = $this->planRepo->findById($id);
@@ -66,7 +71,20 @@ class WeeklyPlanService
             return false;
         }
         $newStatus = $task['status'] === 'done' ? 'pending' : 'done';
-        $result = $this->planRepo->updateTask($taskId, $newStatus);
+        $result = $this->planRepo->updateTask($taskId, $newStatus, $task['assigned_to'] ?? null);
+        if ($result) {
+            $this->recalculateProgress((int)$task['plan_id']);
+        }
+        return $result;
+    }
+
+    public function updateTask(int $taskId, string $status, ?int $assignedTo): bool
+    {
+        $task = $this->planRepo->findTaskById($taskId);
+        if (!$task) {
+            return false;
+        }
+        $result = $this->planRepo->updateTask($taskId, $status, $assignedTo);
         if ($result) {
             $this->recalculateProgress((int)$task['plan_id']);
         }

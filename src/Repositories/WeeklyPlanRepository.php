@@ -45,6 +45,14 @@ class WeeklyPlanRepository
         return $stmt->fetchAll();
     }
 
+    public function getDistinctWeeks(): array
+    {
+        $stmt = $this->db->query(
+            'SELECT DISTINCT week_start FROM weekly_plans ORDER BY week_start DESC'
+        );
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
     public function findById(int $id): ?array
     {
         $stmt = $this->db->prepare(
@@ -116,10 +124,12 @@ class WeeklyPlanRepository
         return (int)$this->db->lastInsertId();
     }
 
-    public function updateTask(int $taskId, string $status): bool
+    public function updateTask(int $taskId, string $status, ?int $assignedTo = null): bool
     {
-        $stmt = $this->db->prepare('UPDATE weekly_tasks SET status = ? WHERE id = ?');
-        return $stmt->execute([$status, $taskId]);
+        $stmt = $this->db->prepare(
+            'UPDATE weekly_tasks SET status = ?, assigned_to = ? WHERE id = ?'
+        );
+        return $stmt->execute([$status, $assignedTo, $taskId]);
     }
 
     public function updateTaskStatus(int $taskId, string $status, ?int $assignedTo = null): bool
@@ -131,7 +141,7 @@ class WeeklyPlanRepository
     public function getTasksByPlanId(int $planId): array
     {
         $stmt = $this->db->prepare(
-            'SELECT wt.*, u.name as assigned_name
+            'SELECT wt.*, u.name as assignee_name
              FROM weekly_tasks wt
              LEFT JOIN users u ON wt.assigned_to = u.id
              WHERE wt.plan_id = ?

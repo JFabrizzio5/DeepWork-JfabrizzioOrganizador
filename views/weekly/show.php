@@ -125,123 +125,118 @@ foreach ($projects as $p) {
                     <?php endif; ?>
                 </div>
 
-<?php
-$taskStatusColors = [
-    'pending'     => 'bg-slate-700 text-slate-300 border-slate-600',
-    'in_progress' => 'bg-yellow-900/50 text-yellow-300 border-yellow-700',
-    'done'        => 'bg-green-900/50 text-green-300 border-green-700',
-];
-$taskStatusLabels = [
-    'pending'     => 'Pendiente',
-    'in_progress' => 'En progreso',
-    'done'        => 'Hecho',
-];
-?>
-                <!-- Tasks -->
+                <!-- Tareas -->
                 <div class="bg-slate-800 rounded-xl border border-slate-700 p-6 mb-6">
                     <h3 class="text-lg font-semibold text-white mb-4">
                         Tareas
                         <span class="text-slate-400 text-sm font-normal">
-                            (<?= count(array_filter($plan['tasks'] ?? [], fn($t) => $t['status'] === 'done')) ?>/<?= count($plan['tasks'] ?? []) ?> hechas)
+                            (<?= count(array_filter($plan['tasks'] ?? [], fn($t) => $t['status'] === 'done')) ?>/<?= count($plan['tasks'] ?? []) ?> completadas)
                         </span>
                     </h3>
 
                     <?php if (empty($plan['tasks'])): ?>
                     <p class="text-slate-500 text-sm">No hay tareas aún.</p>
                     <?php else: ?>
-                    <div class="space-y-2 mb-4" id="task-list">
+                    <?php
+                    $taskStatusColors = [
+                        'pending'     => 'bg-slate-700 text-slate-300 border-slate-600',
+                        'in_progress' => 'bg-yellow-900/50 text-yellow-300 border-yellow-700',
+                        'done'        => 'bg-green-900/50 text-green-300 border-green-700',
+                    ];
+                    $taskStatusLabels = [
+                        'pending'     => 'Pendiente',
+                        'in_progress' => 'En progreso',
+                        'done'        => 'Hecho',
+                    ];
+                    ?>
+                    <ul class="space-y-3 mb-4" id="task-list">
                         <?php foreach ($plan['tasks'] as $task): ?>
-                        <div class="bg-slate-900/50 rounded-lg px-4 py-3">
-                            <div class="flex items-center gap-3 flex-wrap">
-                                <span class="text-sm flex-1 min-w-0 <?= $task['status'] === 'done' ? 'line-through text-slate-500' : 'text-slate-200' ?>">
+                        <li class="bg-slate-900/50 rounded-lg px-4 py-3">
+                            <div class="flex items-start gap-3 flex-wrap">
+                                <!-- Status badge (read-only for non-admins) -->
+                                <span class="inline-flex items-center text-xs px-2 py-1 rounded border mt-0.5 flex-shrink-0
+                                             <?= $taskStatusColors[$task['status']] ?? 'bg-slate-700 text-slate-300 border-slate-600' ?>">
+                                    <?= $taskStatusLabels[$task['status']] ?? ucfirst($task['status']) ?>
+                                </span>
+                                <!-- Title -->
+                                <span class="text-sm flex-1 text-slate-300 pt-0.5">
                                     <?= htmlspecialchars($task['title']) ?>
                                 </span>
-                                <span class="text-xs px-2 py-0.5 rounded border <?= $taskStatusColors[$task['status']] ?? 'bg-slate-700 text-slate-300 border-slate-600' ?>">
-                                    <?= $taskStatusLabels[$task['status']] ?? htmlspecialchars($task['status']) ?>
-                                </span>
-                                <?php if (!empty($task['assigned_name'])): ?>
-                                <span class="text-xs text-slate-400 whitespace-nowrap">
-                                    👤 <?= htmlspecialchars($task['assigned_name']) ?>
+                                <!-- Assignee badge -->
+                                <?php if (!empty($task['assignee_name'])): ?>
+                                <span class="text-xs bg-blue-900/40 text-blue-300 border border-blue-700 px-2 py-1 rounded flex-shrink-0">
+                                    <?= htmlspecialchars($task['assignee_name']) ?>
                                 </span>
                                 <?php else: ?>
-                                <span class="text-xs text-slate-600 whitespace-nowrap">General</span>
+                                <span class="text-xs text-slate-600 flex-shrink-0">Sin asignar</span>
                                 <?php endif; ?>
+                                <!-- Edit form for admin/dev -->
                                 <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
-                                <button type="button"
-                                        onclick="openTaskEdit(<?= (int)$task['id'] ?>, <?= (int)$plan['id'] ?>, '<?= htmlspecialchars($task['status']) ?>', <?= $task['assigned_to'] ? (int)$task['assigned_to'] : 'null' ?>)"
-                                        class="text-xs text-slate-500 hover:text-blue-400 transition-colors ml-auto flex-shrink-0">
-                                    Editar
-                                </button>
+                                <form method="POST"
+                                      action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/task/<?= htmlspecialchars((string)$task['id']) ?>/update"
+                                      class="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                                    <input type="hidden" name="plan_id" value="<?= htmlspecialchars((string)$plan['id']) ?>">
+                                    <select name="status"
+                                            class="bg-slate-700 border border-slate-600 text-slate-300 text-xs rounded px-2 py-1 focus:outline-none focus:border-blue-500">
+                                        <?php foreach ($taskStatusLabels as $val => $label): ?>
+                                        <option value="<?= $val ?>" <?= $task['status'] === $val ? 'selected' : '' ?>><?= $label ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <select name="assigned_to"
+                                            class="bg-slate-700 border border-slate-600 text-slate-300 text-xs rounded px-2 py-1 focus:outline-none focus:border-blue-500">
+                                        <option value="">Sin asignar</option>
+                                        <?php foreach ($allUsers as $u): ?>
+                                        <option value="<?= htmlspecialchars((string)$u['id']) ?>"
+                                                <?= ($task['assigned_to'] ?? null) == $u['id'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($u['name']) ?>
+                                        </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <button type="submit"
+                                            class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition-colors">
+                                        Guardar
+                                    </button>
+                                </form>
                                 <?php endif; ?>
                             </div>
-                        </div>
+                        </li>
                         <?php endforeach; ?>
                     </div>
                     <?php endif; ?>
 
                     <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
-                    <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/<?= htmlspecialchars((string)$plan['id']) ?>/task" class="mt-4 space-y-2">
-                        <div class="flex gap-2 flex-wrap">
-                            <input type="text" name="title" required placeholder="Nueva tarea..."
-                                   class="flex-1 min-w-0 bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 text-sm">
-                            <select name="assigned_to" class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                                <option value="">General</option>
-                                <?php foreach ($allUsers as $u): ?>
-                                <option value="<?= htmlspecialchars((string)$u['id']) ?>"><?= htmlspecialchars($u['name']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">Agregar</button>
-                        </div>
+                    <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/<?= htmlspecialchars((string)$plan['id']) ?>/task"
+                          class="flex flex-wrap gap-2 mt-4">
+                        <input type="text" name="title" required placeholder="Agregar una tarea..."
+                               class="flex-1 min-w-[180px] bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 text-sm">
+                        <select name="assigned_to"
+                                class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="">Sin asignar</option>
+                            <?php foreach ($allUsers as $u): ?>
+                            <option value="<?= htmlspecialchars((string)$u['id']) ?>"><?= htmlspecialchars($u['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">
+                            + Agregar
+                        </button>
                     </form>
                     <?php endif; ?>
                 </div>
 
-                <!-- Task Edit Modal -->
-                <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
-                <div id="task-edit-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-sm mx-4">
-                        <h3 class="text-lg font-semibold text-white mb-4">Actualizar tarea</h3>
-                        <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/task/update-status">
-                            <input type="hidden" name="task_id" id="modal-task-id">
-                            <input type="hidden" name="plan_id" value="<?= htmlspecialchars((string)$plan['id']) ?>">
-                            <div class="mb-4">
-                                <label class="block text-sm text-slate-300 mb-1">Estado</label>
-                                <select name="status" id="modal-status" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm">
-                                    <option value="pending">Pendiente</option>
-                                    <option value="in_progress">En progreso</option>
-                                    <option value="done">Hecho</option>
-                                </select>
-                            </div>
-                            <div class="mb-5">
-                                <label class="block text-sm text-slate-300 mb-1">Asignado a</label>
-                                <select name="assigned_to" id="modal-assigned" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm">
-                                    <option value="">General</option>
-                                    <?php foreach ($allUsers as $u): ?>
-                                    <option value="<?= htmlspecialchars((string)$u['id']) ?>"><?= htmlspecialchars($u['name']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="flex gap-3">
-                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-5 py-2 rounded-lg transition-colors">Guardar</button>
-                                <button type="button" onclick="closeTaskEdit()" class="text-slate-400 hover:text-white text-sm px-4 py-2 transition-colors">Cancelar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <?php endif; ?>
-
-                <!-- Update Status -->
+                <!-- Actualizar Estado del Plan -->
                 <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
                 <div class="bg-slate-800 rounded-xl border border-slate-700 p-6">
                     <h3 class="text-lg font-semibold text-white mb-4">Actualizar estado del plan</h3>
                     <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/weekly-plan/<?= htmlspecialchars((string)$plan['id']) ?>/status" class="flex gap-3 flex-wrap">
-                        <?php foreach (['pending', 'in_progress', 'completed'] as $s): ?>
+                        <?php
+                        $planStatusLabels = ['pending' => 'Pendiente', 'in_progress' => 'En progreso', 'completed' => 'Completado'];
+                        foreach ($planStatusLabels as $s => $label): ?>
                         <button type="submit" name="status" value="<?= $s ?>"
                                 class="px-4 py-2 rounded-lg text-sm border transition-colors
                                        <?= $plan['status'] === $s
                                            ? 'bg-blue-600 text-white border-blue-500'
                                            : 'border-slate-600 text-slate-400 hover:border-blue-500 hover:text-white' ?>">
-                            <?= $planStatusLabels[$s] ?>
+                            <?= $label ?>
                         </button>
                         <?php endforeach; ?>
                     </form>
@@ -259,9 +254,13 @@ const planData = <?= json_encode([
     'project'      => $plan['project'],
     'status'       => $plan['status'],
     'progress'     => $plan['progress_percent'],
-    'assigned'     => $plan['assigned_name'] ?? 'Unassigned',
+    'assigned'     => $plan['assigned_name'] ?? 'Sin asignar',
     'summary'      => $plan['summary'] ?? '',
-    'tasks'        => array_map(fn($t) => ['title' => $t['title'], 'status' => $t['status']], $plan['tasks'] ?? []),
+    'tasks'        => array_map(fn($t) => [
+        'title'    => $t['title'],
+        'status'   => $t['status'],
+        'assignee' => $t['assignee_name'] ?? '',
+    ], $plan['tasks'] ?? []),
 ]) ?>;
 
 function openTaskEdit(taskId, planId, status, assignedTo) {
@@ -279,35 +278,36 @@ function closeTaskEdit() {
 }
 
 function exportPlanExcel() {
-    const rows = [['Week Start', 'Project', 'Status', 'Assigned To', 'Progress %', 'Summary']];
+    const rows = [['Semana', 'Proyecto', 'Estado', 'Asignado a', 'Progreso %', 'Resumen']];
     rows.push([planData.week_start, planData.project, planData.status, planData.assigned, planData.progress, planData.summary]);
     rows.push([]);
-    rows.push(['Task', 'Status']);
-    planData.tasks.forEach(t => rows.push([t.title, t.status]));
+    rows.push(['Tarea', 'Estado', 'Asignado a']);
+    planData.tasks.forEach(t => rows.push([t.title, t.status, t.assignee || '']));
 
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Weekly Plan');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Plan Semanal');
     XLSX.writeFile(wb, 'plan_' + planData.week_start + '.xlsx');
 }
 
 function exportPlanPDF() {
     const { jsPDF } = window.jspdf;
+    const statusLabels = { pending: 'Pendiente', in_progress: 'En progreso', completed: 'Completado', done: 'Hecho' };
     const doc = new jsPDF();
     doc.setFontSize(16);
-    doc.text('Weekly Plan – ' + planData.week_start, 14, 15);
+    doc.text('Plan Semanal – ' + planData.week_start, 14, 15);
     doc.setFontSize(11);
-    doc.text('Project: ' + planData.project, 14, 24);
-    doc.text('Status: ' + planData.status.replace('_', ' '), 14, 31);
-    doc.text('Assigned to: ' + planData.assigned, 14, 38);
-    doc.text('Progress: ' + planData.progress + '%', 14, 45);
+    doc.text('Proyecto: ' + planData.project, 14, 24);
+    doc.text('Estado: ' + (statusLabels[planData.status] || planData.status), 14, 31);
+    doc.text('Asignado a: ' + planData.assigned, 14, 38);
+    doc.text('Progreso: ' + planData.progress + '%', 14, 45);
     if (planData.summary) {
         doc.setFontSize(10);
         const lines = doc.splitTextToSize(planData.summary, 180);
         doc.text(lines, 14, 54);
     }
 
-    const taskBody = planData.tasks.map(t => [t.title, t.status === 'done' ? '✓ Done' : 'Pending']);
-    doc.autoTable({ head:[['Task', 'Status']], body: taskBody, startY: 64, theme:'grid',
+    const taskBody = planData.tasks.map(t => [t.title, statusLabels[t.status] || t.status, t.assignee || '']);
+    doc.autoTable({ head:[['Tarea', 'Estado', 'Asignado a']], body: taskBody, startY: 64, theme:'grid',
                     headStyles:{ fillColor:[37,99,235] } });
     doc.save('plan_' + planData.week_start + '.pdf');
 }
