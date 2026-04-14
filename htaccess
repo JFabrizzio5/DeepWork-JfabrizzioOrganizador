@@ -1,9 +1,16 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    
-    # Si la petición no es ya para la carpeta public...
+
+    # Block access to dotfiles (.env, .git, etc.)
+    RewriteRule (^|/)\.(?!htaccess) - [F,L]
+
+    # Block access to sensitive project files
+    RewriteRule ^(composer\.(json|lock)|schema\.sql|README\.md|htaccess)$ - [F,L]
+
+    # Block access to application directories
+    RewriteRule ^(src|views|storage|migrations|vendor)(/|$) - [F,L]
+
+    # Forward to public/ only if not already there
     RewriteCond %{REQUEST_URI} !^/public/
-    
-    # ...manda TODO directamente al index.php de la carpeta public
-    RewriteRule ^(.*)$ public/index.php [L]
+    RewriteRule ^(.*)$ public/index.php [QSA,L]
 </IfModule>

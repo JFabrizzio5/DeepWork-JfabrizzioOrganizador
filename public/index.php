@@ -17,6 +17,41 @@ use App\Controllers\ApiController;
 use App\Controllers\ProjectController;
 use App\Middleware\ApiKeyMiddleware;
 
+// Global exception handler — catches any uncaught Throwable so the user
+// sees a styled error page instead of a blank HTTP 500 response.
+set_exception_handler(function (Throwable $e) {
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
+    $debug = ($_ENV['APP_DEBUG'] ?? 'false') === 'true';
+    $homeUrl = htmlspecialchars(($_ENV['APP_URL'] ?? '') ?: '/');
+    echo '<!DOCTYPE html><html><head><title>500 — Internal Server Error</title>'
+       . '<style>'
+       . 'body{margin:0;font-family:system-ui,sans-serif;background:#0f172a;color:#f1f5f9;display:flex;align-items:center;justify-content:center;min-height:100vh}'
+       . '.c{text-align:center;max-width:32rem;padding:1rem}'
+       . 'h1{font-size:3.75rem;font-weight:700;color:#ef4444;margin:0}'
+       . 'p{margin:.5rem 0}'
+       . '.sub{color:#94a3b8}'
+       . '.dbg{margin-top:1.5rem;text-align:left;background:#1e293b;border-radius:.5rem;padding:1rem;font-size:.875rem;color:#fca5a5;overflow:auto;max-height:16rem}'
+       . '.dbg pre{margin:.5rem 0 0;font-size:.75rem;color:#94a3b8}'
+       . 'a.btn{display:inline-block;margin-top:1.5rem;background:#2563eb;color:#fff;padding:.5rem 1.5rem;border-radius:.375rem;text-decoration:none}'
+       . 'a.btn:hover{background:#1d4ed8}'
+       . '</style></head>'
+       . '<body><div class="c">'
+       . '<h1>500</h1>'
+       . '<p style="font-size:1.5rem">Internal Server Error</p>'
+       . '<p class="sub">Something went wrong. Please try again later.</p>';
+    if ($debug) {
+        echo '<div class="dbg">'
+           . '<p><strong>' . htmlspecialchars($e->getMessage()) . '</strong></p>'
+           . '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>'
+           . '</div>';
+    }
+    echo '<a class="btn" href="' . $homeUrl . '">Go Home</a>'
+       . '</div></body></html>';
+    exit;
+});
+
 // Load .env
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
 $dotenv->load();

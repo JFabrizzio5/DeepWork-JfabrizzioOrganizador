@@ -6,8 +6,12 @@
     RewriteRule (^|/)\.(?!htaccess) - [F,L]
 
     # Block access to sensitive project files
-    RewriteRule ^(composer\.(json|lock)|schema\.sql|README\.md)$ - [F,L]
+    RewriteRule ^(composer\.(json|lock)|schema\.sql|README\.md|htaccess)$ - [F,L]
 
-    # Forward everything else to public/
+    # Block access to application directories (src, views, storage, migrations, vendor)
+    RewriteRule ^(src|views|storage|migrations|vendor)(/|$) - [F,L]
+
+    # Forward to public/ only if not already rewritten there
+    RewriteCond %{REQUEST_URI} !^/public/
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>

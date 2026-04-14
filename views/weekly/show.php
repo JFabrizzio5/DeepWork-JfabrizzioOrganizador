@@ -201,7 +201,7 @@ foreach ($projects as $p) {
                             </div>
                         </li>
                         <?php endforeach; ?>
-                    </div>
+                    </ul>
                     <?php endif; ?>
 
                     <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
