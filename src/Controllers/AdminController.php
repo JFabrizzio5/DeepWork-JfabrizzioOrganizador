@@ -78,6 +78,30 @@ class AdminController
         Response::redirect($_ENV['APP_URL'] . '/admin/users');
     }
 
+    public function updateUserRole(string $id): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/admin/users');
+        }
+
+        if ((int)$id === $currentUser['id']) {
+            Session::flash('error', 'No puedes cambiar tu propio rol.');
+            Response::redirect($_ENV['APP_URL'] . '/admin/users');
+        }
+
+        $role = $this->request->post('role', 'user');
+        $allowedRoles = ['admin', 'dev', 'user'];
+        if (!in_array($role, $allowedRoles, true)) {
+            Session::flash('error', 'Rol no válido.');
+            Response::redirect($_ENV['APP_URL'] . '/admin/users');
+        }
+
+        $this->userService->update((int)$id, ['role' => $role]);
+        Session::flash('success', 'Rol del usuario actualizado.');
+        Response::redirect($_ENV['APP_URL'] . '/admin/users');
+    }
+
     public function deleteUser(string $id): void
     {
         $currentUser = $this->getCurrentUser();
