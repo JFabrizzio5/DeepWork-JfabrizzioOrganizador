@@ -1,0 +1,13 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Block access to dotfiles (.env, .git, .htaccess, etc.)
+    RewriteRule (^|/)\.(?!htaccess) - [F,L]
+
+    # Block access to sensitive project files
+    RewriteRule ^(composer\.(json|lock)|schema\.sql|README\.md)$ - [F,L]
+
+    # Forward everything else to public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

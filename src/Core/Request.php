@@ -35,7 +35,12 @@ class Request
         if ($scriptDir !== '/' && str_starts_with($uri, $scriptDir)) {
             $uri = substr($uri, strlen($scriptDir));
         }
-        return '/' . ltrim($uri, '/');
+        $uri = '/' . ltrim($uri, '/');
+        // Normalize trailing slashes (except for root path)
+        if ($uri !== '/') {
+            $uri = rtrim($uri, '/');
+        }
+        return $uri;
     }
 
     public function isPost(): bool
