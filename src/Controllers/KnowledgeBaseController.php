@@ -210,8 +210,12 @@ class KnowledgeBaseController
             Response::abort(404, 'File not found.');
         }
 
-        $this->kbService->deleteFile((int)$id, (int)$fileId);
-        Session::flash('success', 'File deleted.');
+        $deleted = $this->kbService->deleteFile((int)$id, (int)$fileId);
+        if ($deleted) {
+            Session::flash('success', 'File deleted.');
+        } else {
+            Session::flash('error', 'Failed to delete file.');
+        }
         Response::redirect($_ENV['APP_URL'] . '/knowledge/' . $id . '/edit');
     }
 

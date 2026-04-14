@@ -105,8 +105,8 @@ class KnowledgeBaseService
         }
 
         $filePath = dirname(__DIR__, 2) . '/storage/knowledge/' . $articleId . '/' . $file['filename'];
-        if (file_exists($filePath)) {
-            unlink($filePath);
+        if (file_exists($filePath) && !unlink($filePath)) {
+            return false;
         }
 
         return $this->kbRepo->deleteFile($fileId);
