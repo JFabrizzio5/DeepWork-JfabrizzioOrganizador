@@ -74,6 +74,7 @@ class KnowledgeBaseController
 
         // Handle file uploads
         $files = $_FILES['attachments'] ?? null;
+        $uploadErrors = [];
         if ($files && is_array($files['name'])) {
             for ($i = 0; $i < count($files['name']); $i++) {
                 if ($files['error'][$i] === UPLOAD_ERR_OK) {
@@ -86,13 +87,17 @@ class KnowledgeBaseController
                     ];
                     $result = $this->kbService->uploadFile($file, $id, $user['id']);
                     if (is_string($result)) {
-                        Session::flash('error', $result);
+                        $uploadErrors[] = $result;
                     }
                 }
             }
         }
 
-        Session::flash('success', 'Article created successfully.');
+        if (!empty($uploadErrors)) {
+            Session::flash('error', implode(' ', $uploadErrors));
+        } else {
+            Session::flash('success', 'Article created successfully.');
+        }
         Response::redirect($_ENV['APP_URL'] . '/knowledge/' . $id);
     }
 
@@ -132,14 +137,16 @@ class KnowledgeBaseController
             Response::abort(404, 'File not found.');
         }
 
-        $filePath = dirname(__DIR__, 2) . '/public/uploads/knowledge/' . $id . '/' . $file['filename'];
+        $filePath = dirname(__DIR__, 2) . '/storage/knowledge/' . $id . '/' . $file['filename'];
         if (!file_exists($filePath)) {
             Response::abort(404, 'File not found on disk.');
         }
 
+        $safeName = preg_replace('/[^a-zA-Z0-9._\-]/', '_', basename($file['original_name']));
         header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . basename($file['original_name']) . '"');
+        header('Content-Disposition: attachment; filename="' . $safeName . '"');
         header('Content-Length: ' . filesize($filePath));
+        header('X-Content-Type-Options: nosniff');
         readfile($filePath);
         exit;
     }

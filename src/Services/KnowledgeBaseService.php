@@ -62,12 +62,13 @@ class KnowledgeBaseService
             return 'File type not allowed. Allowed: ' . implode(', ', $this->allowedTypes);
         }
 
-        $uploadDir = dirname(__DIR__, 2) . '/public/uploads/knowledge/' . $articleId . '/';
+        // Store files outside the public document root for security
+        $uploadDir = dirname(__DIR__, 2) . '/storage/knowledge/' . $articleId . '/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
 
-        $filename = uniqid('kb_', true) . '.' . $ext;
+        $filename = bin2hex(random_bytes(16)) . '.' . $ext;
         $destination = $uploadDir . $filename;
 
         if (!move_uploaded_file($file['tmp_name'], $destination)) {
@@ -100,7 +101,7 @@ class KnowledgeBaseService
     {
         // Delete physical files
         $files = $this->kbRepo->findFilesByArticleId($id);
-        $uploadDir = dirname(__DIR__, 2) . '/public/uploads/knowledge/' . $id . '/';
+        $uploadDir = dirname(__DIR__, 2) . '/storage/knowledge/' . $id . '/';
         foreach ($files as $file) {
             $path = $uploadDir . $file['filename'];
             if (file_exists($path)) {
@@ -108,7 +109,7 @@ class KnowledgeBaseService
             }
         }
         if (is_dir($uploadDir)) {
-            @rmdir($uploadDir);
+            rmdir($uploadDir);
         }
 
         // Delete DB records (files cascade via FK)

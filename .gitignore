@@ -7,6 +7,7 @@
 # Uploads (runtime)
 /public/uploads/tickets/*/
 /public/uploads/weekly/
+/storage/knowledge/*/
 
 # IDE
 .idea/
