@@ -15,6 +15,7 @@ use App\Controllers\KnowledgeBaseController;
 use App\Controllers\WeeklyPlanController;
 use App\Controllers\ApiController;
 use App\Controllers\ProjectController;
+use App\Core\MigrationRunner;
 use App\Middleware\ApiKeyMiddleware;
 
 // Global exception handler — catches any uncaught Throwable so the user
@@ -55,6 +56,9 @@ set_exception_handler(function (Throwable $e) {
 // Load .env
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
 $dotenv->load();
+
+// Run pending database migrations
+(new MigrationRunner())->run();
 
 Session::start();
 
