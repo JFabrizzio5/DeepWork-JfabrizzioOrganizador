@@ -56,6 +56,7 @@ $router->get('/admin/users', [AdminController::class, 'users'], [AuthMiddleware:
 $router->get('/admin/users/create', [AdminController::class, 'createUser'], [AuthMiddleware::class]);
 $router->post('/admin/users/store', [AdminController::class, 'storeUser'], [AuthMiddleware::class]);
 $router->post('/admin/users/{id}/delete', [AdminController::class, 'deleteUser'], [AuthMiddleware::class]);
+$router->post('/admin/users/{id}/role', [AdminController::class, 'updateUserRole'], [AuthMiddleware::class]);
 $router->post('/admin/users/{id}/highlight', [AdminController::class, 'updateUserHighlight'], [AuthMiddleware::class]);
 $router->post('/admin/users/{id}/sucursales', [AdminController::class, 'updateUserSucursales'], [AuthMiddleware::class]);
 $router->get('/admin/weekly-dashboard', [AdminController::class, 'weeklyDashboard'], [AuthMiddleware::class]);

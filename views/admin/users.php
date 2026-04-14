@@ -64,6 +64,18 @@
                                 </td>
                                 <td class="px-4 py-3 text-slate-400"><?= htmlspecialchars($u['email']) ?></td>
                                 <td class="px-4 py-3">
+                                    <?php if ((int)$u['id'] !== $user['id']): ?>
+                                    <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/admin/users/<?= htmlspecialchars((string)$u['id']) ?>/role"
+                                          class="flex items-center gap-1">
+                                        <select name="role"
+                                                onchange="this.form.submit()"
+                                                class="text-xs px-2 py-1 rounded border bg-slate-800 border-slate-600 text-slate-200 cursor-pointer focus:outline-none focus:border-blue-500">
+                                            <option value="user"  <?= $u['role'] === 'user'  ? 'selected' : '' ?>>Usuario</option>
+                                            <option value="dev"   <?= $u['role'] === 'dev'   ? 'selected' : '' ?>>Dev</option>
+                                            <option value="admin" <?= $u['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
+                                        </select>
+                                    </form>
+                                    <?php else: ?>
                                     <?php
                                     $roleBadge = match($u['role']) {
                                         'admin' => 'bg-red-900/50 text-red-300 border-red-700',
@@ -77,6 +89,7 @@
                                     };
                                     ?>
                                     <span class="text-xs px-2 py-1 rounded border <?= $roleBadge ?>"><?= $roleLabel ?></span>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="px-4 py-3">
                                     <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/admin/users/<?= htmlspecialchars((string)$u['id']) ?>/highlight"
