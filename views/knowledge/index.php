@@ -37,7 +37,7 @@ $searchQuery = $searchQuery ?? '';
                                class="bg-slate-700 border border-slate-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 w-48">
                         <button type="submit" class="bg-slate-700 hover:bg-slate-600 text-white text-sm px-3 py-2 rounded-lg transition-colors">Search</button>
                     </form>
-                    <?php if ($user['role'] === 'admin'): ?>
+                    <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
                     <a href="<?= htmlspecialchars($appUrl) ?>/knowledge/create"
                        class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition-colors whitespace-nowrap">+ New Article</a>
                     <?php endif; ?>
@@ -97,7 +97,7 @@ $searchQuery = $searchQuery ?? '';
                         <span><?= htmlspecialchars($article['creator_name'] ?? 'Unknown') ?></span>
                         <span><?= htmlspecialchars(date('M j, Y', strtotime($article['created_at']))) ?></span>
                     </div>
-                    <?php if ($user['role'] === 'admin'): ?>
+                    <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
                     <div class="mt-3 pt-3 border-t border-slate-700 flex gap-3">
                         <a href="<?= htmlspecialchars($appUrl) ?>/knowledge/<?= htmlspecialchars((string)$article['id']) ?>" class="text-blue-400 hover:text-blue-300 text-xs">View</a>
                         <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/knowledge/<?= htmlspecialchars((string)$article['id']) ?>/delete"

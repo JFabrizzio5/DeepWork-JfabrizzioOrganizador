@@ -22,7 +22,7 @@
                 </div>
 
                 <div class="bg-slate-800 rounded-xl border border-slate-700 p-6">
-                    <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/knowledge/store" class="space-y-4">
+                    <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/knowledge/store" enctype="multipart/form-data" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-1">Title <span class="text-red-400">*</span></label>
                             <input type="text" name="title" required maxlength="200"
@@ -56,6 +56,12 @@
                             <textarea name="links" rows="3"
                                       class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none text-sm"
                                       placeholder="https://docs.example.com&#10;https://github.com/..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Attachments <span class="text-slate-500">(.zip, .pdf, images, etc.)</span></label>
+                            <input type="file" name="attachments[]" multiple
+                                   class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2.5 text-white file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 focus:outline-none focus:border-blue-500">
+                            <p class="text-xs text-slate-500 mt-1">You can select multiple files. Allowed: png, jpg, jpeg, gif, pdf, doc, docx, xls, xlsx, ppt, pptx, txt, csv, xml, zip, rar, 7z, tar, gz, mp4, mp3, json, sql, md, html, css, js, php, py</p>
                         </div>
                         <div class="pt-2 flex gap-3">
                             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors">
