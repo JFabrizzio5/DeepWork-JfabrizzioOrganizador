@@ -8,6 +8,7 @@ class MigrationRunner
 {
     private PDO $db;
     private string $migrationsPath;
+    private static bool $hasRun = false;
 
     public function __construct()
     {
@@ -17,9 +18,15 @@ class MigrationRunner
 
     /**
      * Run all pending migrations from the migrations/ directory.
+     * Executes at most once per process.
      */
     public function run(): void
     {
+        if (self::$hasRun) {
+            return;
+        }
+        self::$hasRun = true;
+
         $this->ensureMigrationsTable();
 
         $applied = $this->getAppliedMigrations();
@@ -76,6 +83,9 @@ class MigrationRunner
     private function getAppliedMigrations(): array
     {
         $stmt = $this->db->query('SELECT migration FROM migrations ORDER BY id');
+        if ($stmt === false) {
+            return [];
+        }
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
@@ -89,6 +99,9 @@ class MigrationRunner
         }
 
         $files = glob($this->migrationsPath . '/*.sql');
+        if ($files === false) {
+            return [];
+        }
         sort($files);
         return $files;
     }
