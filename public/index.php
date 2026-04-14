@@ -17,6 +17,32 @@ use App\Controllers\ApiController;
 use App\Controllers\ProjectController;
 use App\Middleware\ApiKeyMiddleware;
 
+// Global exception handler — catches any uncaught Throwable so the user
+// sees a styled error page instead of a blank HTTP 500 response.
+set_exception_handler(function (Throwable $e) {
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
+    $debug = ($_ENV['APP_DEBUG'] ?? 'false') === 'true';
+    echo '<!DOCTYPE html><html><head><title>500 — Internal Server Error</title>'
+       . '<script src="https://cdn.tailwindcss.com"></script></head>'
+       . '<body class="bg-slate-900 text-slate-100 flex items-center justify-center h-screen">'
+       . '<div class="text-center max-w-lg px-4">'
+       . '<h1 class="text-6xl font-bold text-red-500">500</h1>'
+       . '<p class="text-2xl mt-4">Internal Server Error</p>'
+       . '<p class="text-slate-400 mt-2">Something went wrong. Please try again later.</p>';
+    if ($debug) {
+        echo '<div class="mt-6 text-left bg-slate-800 rounded-lg p-4 text-sm text-red-300 overflow-auto max-h-64">'
+           . '<p class="font-bold">' . htmlspecialchars($e->getMessage()) . '</p>'
+           . '<pre class="mt-2 text-xs text-slate-400">' . htmlspecialchars($e->getTraceAsString()) . '</pre>'
+           . '</div>';
+    }
+    echo '<a href="' . htmlspecialchars($_ENV['APP_URL'] ?? '') . '/tickets/list" '
+       . 'class="mt-6 inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Go Home</a>'
+       . '</div></body></html>';
+    exit;
+});
+
 // Load .env
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
 $dotenv->load();
