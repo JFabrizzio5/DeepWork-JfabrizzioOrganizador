@@ -118,6 +118,107 @@ class KnowledgeBaseController
         ]);
     }
 
+    public function edit(string $id): void
+    {
+        $user = $this->getCurrentUser();
+        if (!in_array($user['role'], ['admin', 'dev'])) {
+            Response::abort(403, 'Access denied.');
+        }
+
+        $article = $this->kbService->getById((int)$id);
+        if (!$article) {
+            Response::abort(404, 'Article not found.');
+        }
+
+        $files = $this->kbService->getFilesByArticleId((int)$id);
+
+        Response::view('knowledge/edit', [
+            'appUrl'  => $_ENV['APP_URL'],
+            'user'    => $user,
+            'article' => $article,
+            'files'   => $files,
+            'error'   => Session::getFlash('error'),
+        ]);
+    }
+
+    public function update(string $id): void
+    {
+        $user = $this->getCurrentUser();
+        if (!in_array($user['role'], ['admin', 'dev'])) {
+            Response::abort(403, 'Access denied.');
+        }
+
+        $article = $this->kbService->getById((int)$id);
+        if (!$article) {
+            Response::abort(404, 'Article not found.');
+        }
+
+        $title   = trim($this->request->post('title', ''));
+        $content = trim($this->request->post('content', ''));
+
+        if (empty($title) || empty($content)) {
+            Session::flash('error', 'Title and content are required.');
+            Response::redirect($_ENV['APP_URL'] . '/knowledge/' . $id . '/edit');
+        }
+
+        $this->kbService->update((int)$id, [
+            'title'    => $title,
+            'content'  => $content,
+            'tags'     => $this->request->post('tags', ''),
+            'links'    => $this->request->post('links', ''),
+            'tag_type' => $this->request->post('tag_type', 'documentation'),
+        ]);
+
+        // Handle file uploads
+        $files = $_FILES['attachments'] ?? null;
+        $uploadErrors = [];
+        if ($files && is_array($files['name'])) {
+            for ($i = 0; $i < count($files['name']); $i++) {
+                if ($files['error'][$i] === UPLOAD_ERR_OK) {
+                    $file = [
+                        'name'     => $files['name'][$i],
+                        'type'     => $files['type'][$i],
+                        'tmp_name' => $files['tmp_name'][$i],
+                        'error'    => $files['error'][$i],
+                        'size'     => $files['size'][$i],
+                    ];
+                    $result = $this->kbService->uploadFile($file, (int)$id, $user['id']);
+                    if (is_string($result)) {
+                        $uploadErrors[] = $result;
+                    }
+                }
+            }
+        }
+
+        if (!empty($uploadErrors)) {
+            Session::flash('error', implode(' ', $uploadErrors));
+        } else {
+            Session::flash('success', 'Article updated successfully.');
+        }
+        Response::redirect($_ENV['APP_URL'] . '/knowledge/' . $id);
+    }
+
+    public function deleteFile(string $id, string $fileId): void
+    {
+        $user = $this->getCurrentUser();
+        if (!in_array($user['role'], ['admin', 'dev'])) {
+            Response::abort(403, 'Access denied.');
+        }
+
+        $file = $this->kbService->getFileById((int)$fileId);
+        if (!$file || (int)$file['article_id'] !== (int)$id) {
+            Response::abort(404, 'File not found.');
+        }
+
+        $deleted = $this->kbService->deleteFile((int)$id, (int)$fileId);
+        if ($deleted) {
+            Session::flash('success', 'File deleted.');
+        } else {
+            Session::flash('error', 'Failed to delete file.');
+        }
+        Response::redirect($_ENV['APP_URL'] . '/knowledge/' . $id . '/edit');
+    }
+
     public function delete(string $id): void
     {
         $user = $this->getCurrentUser();

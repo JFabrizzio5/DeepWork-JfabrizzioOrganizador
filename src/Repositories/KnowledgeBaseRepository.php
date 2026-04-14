@@ -120,4 +120,10 @@ class KnowledgeBaseRepository
         $result = $stmt->fetch();
         return $result ?: null;
     }
+
+    public function deleteFile(int $id): bool
+    {
+        $stmt = $this->db->prepare('DELETE FROM knowledge_base_files WHERE id = ?');
+        return $stmt->execute([$id]);
+    }
 }

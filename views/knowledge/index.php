@@ -100,6 +100,7 @@ $searchQuery = $searchQuery ?? '';
                     <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
                     <div class="mt-3 pt-3 border-t border-slate-700 flex gap-3">
                         <a href="<?= htmlspecialchars($appUrl) ?>/knowledge/<?= htmlspecialchars((string)$article['id']) ?>" class="text-blue-400 hover:text-blue-300 text-xs">View</a>
+                        <a href="<?= htmlspecialchars($appUrl) ?>/knowledge/<?= htmlspecialchars((string)$article['id']) ?>/edit" class="text-yellow-400 hover:text-yellow-300 text-xs">Edit</a>
                         <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/knowledge/<?= htmlspecialchars((string)$article['id']) ?>/delete"
                               onsubmit="return confirm('Delete this article?')" class="inline">
                             <button type="submit" class="text-red-400 hover:text-red-300 text-xs">Delete</button>
