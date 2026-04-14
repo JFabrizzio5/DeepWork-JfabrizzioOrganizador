@@ -27,10 +27,14 @@ $tagTypeColors = [
                 <div class="mb-6 flex items-center justify-between">
                     <a href="<?= htmlspecialchars($appUrl) ?>/knowledge" class="text-slate-400 hover:text-white text-sm transition-colors">← Back to Knowledge Base</a>
                     <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
-                    <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/knowledge/<?= htmlspecialchars((string)$article['id']) ?>/delete"
-                          onsubmit="return confirm('Delete this article?')">
-                        <button type="submit" class="text-red-400 hover:text-red-300 text-sm transition-colors">Delete Article</button>
-                    </form>
+                    <div class="flex gap-3">
+                        <a href="<?= htmlspecialchars($appUrl) ?>/knowledge/<?= htmlspecialchars((string)$article['id']) ?>/edit"
+                           class="text-blue-400 hover:text-blue-300 text-sm transition-colors">Edit Article</a>
+                        <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/knowledge/<?= htmlspecialchars((string)$article['id']) ?>/delete"
+                              onsubmit="return confirm('Delete this article?')">
+                            <button type="submit" class="text-red-400 hover:text-red-300 text-sm transition-colors">Delete Article</button>
+                        </form>
+                    </div>
                     <?php endif; ?>
                 </div>
 

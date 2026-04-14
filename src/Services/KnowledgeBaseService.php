@@ -97,6 +97,21 @@ class KnowledgeBaseService
         return $this->kbRepo->findFileById($fileId);
     }
 
+    public function deleteFile(int $articleId, int $fileId): bool
+    {
+        $file = $this->kbRepo->findFileById($fileId);
+        if (!$file || (int)$file['article_id'] !== $articleId) {
+            return false;
+        }
+
+        $filePath = dirname(__DIR__, 2) . '/storage/knowledge/' . $articleId . '/' . $file['filename'];
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+
+        return $this->kbRepo->deleteFile($fileId);
+    }
+
     public function deleteWithFiles(int $id): bool
     {
         // Delete physical files
