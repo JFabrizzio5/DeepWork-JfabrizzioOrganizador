@@ -80,6 +80,7 @@ $router->get('/knowledge/search', [KnowledgeBaseController::class, 'search'], [A
 $router->get('/knowledge/create', [KnowledgeBaseController::class, 'create'], [AuthMiddleware::class]);
 $router->post('/knowledge/store', [KnowledgeBaseController::class, 'store'], [AuthMiddleware::class]);
 $router->get('/knowledge/{id}', [KnowledgeBaseController::class, 'show'], [AuthMiddleware::class]);
+$router->get('/knowledge/{id}/file/{fileId}', [KnowledgeBaseController::class, 'serveFile'], [AuthMiddleware::class]);
 $router->post('/knowledge/{id}/delete', [KnowledgeBaseController::class, 'delete'], [AuthMiddleware::class]);
 
 // Weekly Plan routes (specific before parametric)

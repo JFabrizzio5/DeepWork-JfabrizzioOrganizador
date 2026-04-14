@@ -83,7 +83,41 @@ class KnowledgeBaseRepository
 
     public function delete(int $id): bool
     {
+        // Files are deleted via CASCADE
         $stmt = $this->db->prepare('DELETE FROM knowledge_base WHERE id = ?');
         return $stmt->execute([$id]);
+    }
+
+    public function createFile(array $data): int
+    {
+        $stmt = $this->db->prepare(
+            'INSERT INTO knowledge_base_files (article_id, user_id, filename, original_name, file_type, file_size) VALUES (?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->execute([
+            $data['article_id'],
+            $data['user_id'],
+            $data['filename'],
+            $data['original_name'],
+            $data['file_type'] ?? null,
+            $data['file_size'] ?? null,
+        ]);
+        return (int)$this->db->lastInsertId();
+    }
+
+    public function findFilesByArticleId(int $articleId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT kf.*, u.name as uploader_name FROM knowledge_base_files kf LEFT JOIN users u ON kf.user_id = u.id WHERE kf.article_id = ? ORDER BY kf.created_at ASC'
+        );
+        $stmt->execute([$articleId]);
+        return $stmt->fetchAll();
+    }
+
+    public function findFileById(int $id): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM knowledge_base_files WHERE id = ?');
+        $stmt->execute([$id]);
+        $result = $stmt->fetch();
+        return $result ?: null;
     }
 }

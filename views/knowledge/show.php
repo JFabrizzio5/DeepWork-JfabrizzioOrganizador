@@ -26,7 +26,7 @@ $tagTypeColors = [
             <div class="max-w-3xl mx-auto">
                 <div class="mb-6 flex items-center justify-between">
                     <a href="<?= htmlspecialchars($appUrl) ?>/knowledge" class="text-slate-400 hover:text-white text-sm transition-colors">← Back to Knowledge Base</a>
-                    <?php if ($user['role'] === 'admin'): ?>
+                    <?php if (in_array($user['role'], ['admin', 'dev'])): ?>
                     <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/knowledge/<?= htmlspecialchars((string)$article['id']) ?>/delete"
                           onsubmit="return confirm('Delete this article?')">
                         <button type="submit" class="text-red-400 hover:text-red-300 text-sm transition-colors">Delete Article</button>
@@ -81,6 +81,38 @@ $tagTypeColors = [
                             </li>
                             <?php endforeach; ?>
                         </ul>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($files)): ?>
+                    <div class="mt-6">
+                        <h3 class="text-sm font-semibold text-slate-400 mb-3">Attachments (<?= count($files) ?>)</h3>
+                        <div class="space-y-2">
+                            <?php foreach ($files as $file): ?>
+                            <div class="flex items-center gap-3 bg-slate-900/50 rounded-lg px-4 py-3">
+                                <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                                </svg>
+                                <div class="flex-1 min-w-0">
+                                    <a href="<?= htmlspecialchars($appUrl) ?>/knowledge/<?= htmlspecialchars((string)$article['id']) ?>/file/<?= htmlspecialchars((string)$file['id']) ?>"
+                                       class="text-blue-400 hover:text-blue-300 text-sm transition-colors truncate block">
+                                        <?= htmlspecialchars($file['original_name']) ?>
+                                    </a>
+                                    <p class="text-xs text-slate-500">
+                                        <?= htmlspecialchars(strtoupper($file['file_type'] ?? '')) ?>
+                                        · <?= number_format(($file['file_size'] ?? 0) / 1024, 1) ?> KB
+                                        <?php if (!empty($file['uploader_name'])): ?>
+                                        · Uploaded by <?= htmlspecialchars($file['uploader_name']) ?>
+                                        <?php endif; ?>
+                                    </p>
+                                </div>
+                                <a href="<?= htmlspecialchars($appUrl) ?>/knowledge/<?= htmlspecialchars((string)$article['id']) ?>/file/<?= htmlspecialchars((string)$file['id']) ?>"
+                                   class="text-slate-400 hover:text-white text-xs px-3 py-1 bg-slate-700 rounded transition-colors flex-shrink-0">
+                                    Download
+                                </a>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                     <?php endif; ?>
                 </div>
