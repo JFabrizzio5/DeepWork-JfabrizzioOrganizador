@@ -36,6 +36,7 @@
                                 <th class="px-4 py-3 text-left">Rol</th>
                                 <th class="px-4 py-3 text-left">VIP / Destacado</th>
                                 <th class="px-4 py-3 text-left">Sucursales</th>
+                                <th class="px-4 py-3 text-left">Proyectos</th>
                                 <th class="px-4 py-3 text-left">Creado</th>
                                 <th class="px-4 py-3 text-left">Acciones</th>
                             </tr>
@@ -70,22 +71,25 @@
                                         <select name="role"
                                                 onchange="this.form.submit()"
                                                 class="text-xs px-2 py-1 rounded border bg-slate-800 border-slate-600 text-slate-200 cursor-pointer focus:outline-none focus:border-blue-500">
-                                            <option value="user"  <?= $u['role'] === 'user'  ? 'selected' : '' ?>>Usuario</option>
-                                            <option value="dev"   <?= $u['role'] === 'dev'   ? 'selected' : '' ?>>Dev</option>
-                                            <option value="admin" <?= $u['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
+                                            <option value="user"        <?= $u['role'] === 'user'        ? 'selected' : '' ?>>Usuario</option>
+                                            <option value="dev"         <?= $u['role'] === 'dev'         ? 'selected' : '' ?>>Dev</option>
+                                            <option value="admin"       <?= $u['role'] === 'admin'       ? 'selected' : '' ?>>Admin</option>
+                                            <option value="colaborador" <?= $u['role'] === 'colaborador' ? 'selected' : '' ?>>Colaborador</option>
                                         </select>
                                     </form>
                                     <?php else: ?>
                                     <?php
                                     $roleBadge = match($u['role']) {
-                                        'admin' => 'bg-red-900/50 text-red-300 border-red-700',
-                                        'dev'   => 'bg-blue-900/50 text-blue-300 border-blue-700',
-                                        default => 'bg-slate-700 text-slate-300 border-slate-600',
+                                        'admin'       => 'bg-red-900/50 text-red-300 border-red-700',
+                                        'dev'         => 'bg-blue-900/50 text-blue-300 border-blue-700',
+                                        'colaborador' => 'bg-purple-900/50 text-purple-300 border-purple-700',
+                                        default       => 'bg-slate-700 text-slate-300 border-slate-600',
                                     };
                                     $roleLabel = match($u['role']) {
-                                        'admin' => 'Admin',
-                                        'dev'   => 'Dev',
-                                        default => 'Usuario',
+                                        'admin'       => 'Admin',
+                                        'dev'         => 'Dev',
+                                        'colaborador' => 'Colaborador',
+                                        default       => 'Usuario',
                                     };
                                     ?>
                                     <span class="text-xs px-2 py-1 rounded border <?= $roleBadge ?>"><?= $roleLabel ?></span>
@@ -130,7 +134,28 @@
                                         <button type="submit" class="text-xs text-blue-400 hover:text-blue-300 ml-1">Guardar</button>
                                     </form>
                                 </td>
-                                <td class="px-4 py-3 text-slate-500 text-xs"><?= htmlspecialchars(date('d/m/Y', strtotime($u['created_at']))) ?></td>
+                                <!-- Projects column -->
+                                <td class="px-4 py-3">
+                                    <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/admin/users/<?= htmlspecialchars((string)$u['id']) ?>/projects" class="flex flex-wrap gap-1 items-center">
+                                        <?php
+                                        $assignedProjectIds = $userProjectMap[(int)$u['id']] ?? [];
+                                        foreach ($projects as $proj):
+                                        ?>
+                                        <label class="flex items-center gap-1 text-xs text-slate-300 cursor-pointer">
+                                            <input type="checkbox" name="project_ids[]" value="<?= htmlspecialchars((string)$proj['id']) ?>"
+                                                   <?= in_array((string)$proj['id'], array_map('strval', $assignedProjectIds)) ? 'checked' : '' ?>
+                                                   class="w-3 h-3 rounded bg-slate-700 border-slate-600 text-blue-500">
+                                            <span class="w-2 h-2 rounded-full inline-block" style="background-color:<?= htmlspecialchars($proj['color']) ?>"></span>
+                                            <?= htmlspecialchars($proj['name']) ?>
+                                        </label>
+                                        <?php endforeach; ?>
+                                        <?php if (empty($projects)): ?>
+                                        <span class="text-xs text-slate-500">Sin proyectos</span>
+                                        <?php else: ?>
+                                        <button type="submit" class="text-xs text-blue-400 hover:text-blue-300 ml-1">Guardar</button>
+                                        <?php endif; ?>
+                                    </form>
+                                </td>
                                 <td class="px-4 py-3">
                                     <?php if ((int)$u['id'] !== $user['id']): ?>
                                     <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/admin/users/<?= htmlspecialchars((string)$u['id']) ?>/delete"

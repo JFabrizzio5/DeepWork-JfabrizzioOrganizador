@@ -56,6 +56,10 @@
                             <td class="px-5 py-3 text-slate-400 max-w-xs truncate"><?= htmlspecialchars($project['description'] ?? '') ?></td>
                             <td class="px-5 py-3 text-slate-400"><?= htmlspecialchars(date('M j, Y', strtotime($project['created_at']))) ?></td>
                             <td class="px-5 py-3 text-right flex items-center justify-end gap-3">
+                                <a href="<?= htmlspecialchars($appUrl) ?>/projects/<?= htmlspecialchars((string)$project['id']) ?>"
+                                   class="text-slate-400 hover:text-white transition-colors">Ver</a>
+                                <a href="<?= htmlspecialchars($appUrl) ?>/admin/projects/<?= htmlspecialchars((string)$project['id']) ?>/members"
+                                   class="text-purple-400 hover:text-purple-300 transition-colors">Miembros</a>
                                 <a href="<?= htmlspecialchars($appUrl) ?>/admin/projects/<?= htmlspecialchars((string)$project['id']) ?>/edit"
                                    class="text-blue-400 hover:text-blue-300 transition-colors">Edit</a>
                                 <form method="POST" action="<?= htmlspecialchars($appUrl) ?>/admin/projects/<?= htmlspecialchars((string)$project['id']) ?>/delete"

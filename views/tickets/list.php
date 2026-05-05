@@ -13,10 +13,12 @@ $statusColors = [
     'done'        => 'bg-green-900/50 text-green-300 border-green-700',
 ];
 $typeLabels = [
-    'support' => 'Soporte',
-    'bug'     => 'Error',
-    'feature' => 'Mejora',
-    'query'   => 'Consulta',
+    'support'       => 'Soporte',
+    'bug'           => 'Error',
+    'feature'       => 'Mejora',
+    'query'         => 'Consulta',
+    'requerimiento' => 'Requerimiento',
+    'cambio'        => 'Cambio',
 ];
 $impactLabels = [
     'low'      => 'Bajo',
@@ -47,7 +49,6 @@ $impactColors = [
         <main class="flex-1 overflow-y-auto p-6">
             <?php include dirname(__DIR__) . '/partials/flash.php'; ?>
 
-            <!-- Filtros -->
             <?php if (($user['role'] ?? 'user') !== 'user'): ?>
             <div class="bg-slate-800 rounded-xl border border-slate-700 p-4 mb-6">
                 <form method="GET" action="<?= htmlspecialchars($appUrl) ?>/tickets/list">
@@ -103,6 +104,17 @@ $impactColors = [
                                 <?php foreach ($sucursales as $suc): ?>
                                 <option value="<?= htmlspecialchars((string)$suc['id']) ?>" <?= ($filters['sucursal_id'] ?? '') == $suc['id'] ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($suc['nombre']) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Proyecto</label>
+                            <select name="project_id" class="w-full bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                                <option value="">Todos</option>
+                                <?php foreach ($projects ?? [] as $proj): ?>
+                                <option value="<?= htmlspecialchars((string)$proj['id']) ?>" <?= ($filters['project_id'] ?? '') == $proj['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($proj['name']) ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>
