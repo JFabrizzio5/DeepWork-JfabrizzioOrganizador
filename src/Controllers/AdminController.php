@@ -6,6 +6,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Services\UserService;
 use App\Services\WeeklyPlanService;
+use App\Services\ProjectService;
 use App\Repositories\ApiKeyRepository;
 use App\Repositories\SucursalRepository;
 
@@ -13,20 +14,23 @@ class AdminController
 {
     private UserService $userService;
     private SucursalRepository $sucursalRepo;
+    private ProjectService $projectService;
     private Request $request;
 
     public function __construct()
     {
         Session::start();
-        $this->userService  = new UserService();
-        $this->sucursalRepo = new SucursalRepository();
-        $this->request      = new Request();
+        $this->userService    = new UserService();
+        $this->sucursalRepo   = new SucursalRepository();
+        $this->projectService = new ProjectService();
+        $this->request        = new Request();
     }
 
     public function users(): void
     {
         $users      = $this->userService->getAll();
         $sucursales = $this->sucursalRepo->findAll();
+        $projects   = $this->projectService->getAll();
 
         // Load assigned sucursales for each user
         $userSucursalMap = [];
@@ -35,12 +39,21 @@ class AdminController
             $userSucursalMap[(int)$u['id']] = array_column($assigned, 'id');
         }
 
+        // Load assigned projects for each user
+        $userProjectMap = [];
+        foreach ($users as $u) {
+            $assignedProjects = $this->projectService->getProjectsForUser((int)$u['id']);
+            $userProjectMap[(int)$u['id']] = array_column($assignedProjects, 'id');
+        }
+
         Response::view('admin/users', [
             'appUrl'          => $_ENV['APP_URL'],
             'user'            => $this->getCurrentUser(),
             'users'           => $users,
             'sucursales'      => $sucursales,
+            'projects'        => $projects,
             'userSucursalMap' => $userSucursalMap,
+            'userProjectMap'  => $userProjectMap,
             'success'         => Session::getFlash('success'),
             'error'           => Session::getFlash('error'),
         ]);
@@ -91,7 +104,7 @@ class AdminController
         }
 
         $role = $this->request->post('role', 'user');
-        $allowedRoles = ['admin', 'dev', 'user'];
+        $allowedRoles = ['admin', 'dev', 'user', 'colaborador'];
         if (!in_array($role, $allowedRoles, true)) {
             Session::flash('error', 'Rol no válido.');
             Response::redirect($_ENV['APP_URL'] . '/admin/users');
@@ -148,6 +161,23 @@ class AdminController
 
         $this->sucursalRepo->setUserSucursales((int)$id, $sucursalIds);
         Session::flash('success', 'Sucursales del usuario actualizadas.');
+        Response::redirect($_ENV['APP_URL'] . '/admin/users');
+    }
+
+    public function updateUserProjects(string $id): void
+    {
+        $currentUser = $this->getCurrentUser();
+        if ($currentUser['role'] !== 'admin') {
+            Response::redirect($_ENV['APP_URL'] . '/admin/users');
+        }
+
+        $projectIds = $this->request->post('project_ids', []);
+        if (!is_array($projectIds)) {
+            $projectIds = [];
+        }
+
+        $this->projectService->setUserProjects((int)$id, $projectIds);
+        Session::flash('success', 'Proyectos del usuario actualizados.');
         Response::redirect($_ENV['APP_URL'] . '/admin/users');
     }
 

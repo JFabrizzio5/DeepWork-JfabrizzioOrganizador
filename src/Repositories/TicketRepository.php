@@ -17,11 +17,12 @@ class TicketRepository
     {
         $stmt = $this->db->prepare(
             'SELECT t.*, u.name as requester_user_name, u.is_vip as requester_is_vip, u.highlight_color as requester_highlight_color,
-                    a.name as assigned_name, s.nombre as sucursal_nombre
+                    a.name as assigned_name, s.nombre as sucursal_nombre, p.name as project_name
              FROM tickets t
              LEFT JOIN users u ON t.user_id = u.id
              LEFT JOIN users a ON t.assigned_to = a.id
              LEFT JOIN sucursales s ON t.sucursal_id = s.id
+             LEFT JOIN projects p ON t.project_id = p.id
              WHERE t.id = ?'
         );
         $stmt->execute([$id]);
@@ -32,11 +33,12 @@ class TicketRepository
     public function findAll(array $filters = []): array
     {
         $sql = 'SELECT t.*, u.name as requester_user_name, u.is_vip as requester_is_vip, u.highlight_color as requester_highlight_color,
-                       a.name as assigned_name, s.nombre as sucursal_nombre
+                       a.name as assigned_name, s.nombre as sucursal_nombre, p.name as project_name
                 FROM tickets t
                 LEFT JOIN users u ON t.user_id = u.id
                 LEFT JOIN users a ON t.assigned_to = a.id
                 LEFT JOIN sucursales s ON t.sucursal_id = s.id
+                LEFT JOIN projects p ON t.project_id = p.id
                 WHERE 1=1';
         $params = [];
 
@@ -63,6 +65,10 @@ class TicketRepository
         if (!empty($filters['sucursal_id'])) {
             $sql .= ' AND t.sucursal_id = ?';
             $params[] = (int)$filters['sucursal_id'];
+        }
+        if (!empty($filters['project_id'])) {
+            $sql .= ' AND t.project_id = ?';
+            $params[] = (int)$filters['project_id'];
         }
         if (!empty($filters['date_from'])) {
             $sql .= ' AND DATE(t.created_at) >= ?';
@@ -116,8 +122,8 @@ class TicketRepository
     {
         $stmt = $this->db->prepare(
             'INSERT INTO tickets
-             (title, description, type, impact, priority_user, status, phase, steps_to_reproduce, technical_context, requester_name, requester_email, user_id, assigned_to, escalation, is_resolved, sucursal_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             (title, description, type, impact, priority_user, status, phase, steps_to_reproduce, technical_context, requester_name, requester_email, user_id, assigned_to, escalation, is_resolved, sucursal_id, project_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $data['title'] ?? null,
@@ -136,8 +142,40 @@ class TicketRepository
             $data['escalation'] ?? 'none',
             $data['is_resolved'] ?? 0,
             $data['sucursal_id'] ?? null,
+            $data['project_id'] ?? null,
         ]);
         return (int)$this->db->lastInsertId();
+    }
+
+    /**
+     * Tickets visible to a colaborador: only type='cambio' within their assigned projects.
+     */
+    public function findForColaborador(int $userId, array $filters = []): array
+    {
+        $sql = 'SELECT t.*, u.name as requester_user_name, u.is_vip as requester_is_vip, u.highlight_color as requester_highlight_color,
+                       a.name as assigned_name, s.nombre as sucursal_nombre, p.name as project_name
+                FROM tickets t
+                LEFT JOIN users u ON t.user_id = u.id
+                LEFT JOIN users a ON t.assigned_to = a.id
+                LEFT JOIN sucursales s ON t.sucursal_id = s.id
+                LEFT JOIN projects p ON t.project_id = p.id
+                JOIN user_projects up ON t.project_id = up.project_id AND up.user_id = ?
+                WHERE t.type = \'cambio\'';
+        $params = [$userId];
+
+        if (!empty($filters['status'])) {
+            $sql .= ' AND t.status = ?';
+            $params[] = $filters['status'];
+        }
+        if (!empty($filters['project_id'])) {
+            $sql .= ' AND t.project_id = ?';
+            $params[] = (int)$filters['project_id'];
+        }
+
+        $sql .= ' ORDER BY t.created_at DESC';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
     public function update(int $id, array $data): bool

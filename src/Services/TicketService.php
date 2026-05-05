@@ -77,4 +77,9 @@ class TicketService
     {
         return $this->ticketRepo->update($id, ['is_resolved' => $resolved]);
     }
+
+    public function getColaboradorTickets(int $userId, array $filters = []): array
+    {
+        return $this->ticketRepo->findForColaborador($userId, $filters);
+    }
 }

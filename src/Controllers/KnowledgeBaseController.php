@@ -5,33 +5,48 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Services\KnowledgeBaseService;
+use App\Services\ProjectService;
 
 class KnowledgeBaseController
 {
     private KnowledgeBaseService $kbService;
+    private ProjectService $projectService;
     private Request $request;
 
     public function __construct()
     {
         Session::start();
-        $this->kbService = new KnowledgeBaseService();
-        $this->request = new Request();
+        $this->kbService      = new KnowledgeBaseService();
+        $this->projectService = new ProjectService();
+        $this->request        = new Request();
     }
 
     public function index(): void
     {
+        $user = $this->getCurrentUser();
         $filters = [
-            'tag_type' => $this->request->get('tag_type', ''),
+            'tag_type'   => $this->request->get('tag_type', ''),
+            'project_id' => $this->request->get('project_id', ''),
         ];
-        $articles = $this->kbService->getAll($filters);
+
+        if ($user['role'] === 'colaborador') {
+            $articles = $this->kbService->getAllForColaborador($user['id'], $filters);
+        } else {
+            $articles = $this->kbService->getAll($filters);
+        }
+
+        $userProjects = ($user['role'] === 'admin')
+            ? $this->projectService->getAll()
+            : $this->projectService->getProjectsForUser($user['id']);
 
         Response::view('knowledge/index', [
-            'appUrl' => $_ENV['APP_URL'],
-            'user' => $this->getCurrentUser(),
+            'appUrl'   => $_ENV['APP_URL'],
+            'user'     => $this->getCurrentUser(),
             'articles' => $articles,
-            'filters' => $filters,
-            'success' => Session::getFlash('success'),
-            'error' => Session::getFlash('error'),
+            'filters'  => $filters,
+            'projects' => $userProjects,
+            'success'  => Session::getFlash('success'),
+            'error'    => Session::getFlash('error'),
         ]);
     }
 
@@ -42,10 +57,15 @@ class KnowledgeBaseController
             Response::abort(403, 'Access denied.');
         }
 
+        $userProjects = ($user['role'] === 'admin')
+            ? $this->projectService->getAll()
+            : $this->projectService->getProjectsForUser($user['id']);
+
         Response::view('knowledge/create', [
-            'appUrl' => $_ENV['APP_URL'],
-            'user' => $user,
-            'error' => Session::getFlash('error'),
+            'appUrl'   => $_ENV['APP_URL'],
+            'user'     => $user,
+            'projects' => $userProjects,
+            'error'    => Session::getFlash('error'),
         ]);
     }
 
@@ -65,11 +85,12 @@ class KnowledgeBaseController
         }
 
         $id = $this->kbService->create([
-            'title'    => $title,
-            'content'  => $content,
-            'tags'     => $this->request->post('tags', ''),
-            'links'    => $this->request->post('links', ''),
-            'tag_type' => $this->request->post('tag_type', 'documentation'),
+            'title'      => $title,
+            'content'    => $content,
+            'tags'       => $this->request->post('tags', ''),
+            'links'      => $this->request->post('links', ''),
+            'tag_type'   => $this->request->post('tag_type', 'documentation'),
+            'project_id' => $this->request->post('project_id', null) ?: null,
         ], $user['id']);
 
         // Handle file uploads
@@ -131,13 +152,17 @@ class KnowledgeBaseController
         }
 
         $files = $this->kbService->getFilesByArticleId((int)$id);
+        $userProjects = ($user['role'] === 'admin')
+            ? $this->projectService->getAll()
+            : $this->projectService->getProjectsForUser($user['id']);
 
         Response::view('knowledge/edit', [
-            'appUrl'  => $_ENV['APP_URL'],
-            'user'    => $user,
-            'article' => $article,
-            'files'   => $files,
-            'error'   => Session::getFlash('error'),
+            'appUrl'   => $_ENV['APP_URL'],
+            'user'     => $user,
+            'article'  => $article,
+            'files'    => $files,
+            'projects' => $userProjects,
+            'error'    => Session::getFlash('error'),
         ]);
     }
 
@@ -162,11 +187,12 @@ class KnowledgeBaseController
         }
 
         $this->kbService->update((int)$id, [
-            'title'    => $title,
-            'content'  => $content,
-            'tags'     => $this->request->post('tags', ''),
-            'links'    => $this->request->post('links', ''),
-            'tag_type' => $this->request->post('tag_type', 'documentation'),
+            'title'      => $title,
+            'content'    => $content,
+            'tags'       => $this->request->post('tags', ''),
+            'links'      => $this->request->post('links', ''),
+            'tag_type'   => $this->request->post('tag_type', 'documentation'),
+            'project_id' => $this->request->post('project_id', null) ?: null,
         ]);
 
         // Handle file uploads
@@ -254,17 +280,19 @@ class KnowledgeBaseController
 
     public function search(): void
     {
+        $user  = $this->getCurrentUser();
         $query = $this->request->get('q', '');
         $articles = $query ? $this->kbService->search($query) : [];
 
         Response::view('knowledge/index', [
-            'appUrl' => $_ENV['APP_URL'],
-            'user' => $this->getCurrentUser(),
-            'articles' => $articles,
-            'filters' => [],
+            'appUrl'      => $_ENV['APP_URL'],
+            'user'        => $user,
+            'articles'    => $articles,
+            'filters'     => [],
+            'projects'    => [],
             'searchQuery' => $query,
-            'success' => null,
-            'error' => null,
+            'success'     => null,
+            'error'       => null,
         ]);
     }
 

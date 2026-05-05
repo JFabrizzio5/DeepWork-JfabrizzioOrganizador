@@ -66,4 +66,49 @@ class ProjectRepository
         $stmt = $this->db->prepare('DELETE FROM projects WHERE id = ?');
         return $stmt->execute([$id]);
     }
+
+    // ── User-project access ────────────────────────────────
+
+    public function getProjectsForUser(int $userId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT p.* FROM projects p
+             JOIN user_projects up ON p.id = up.project_id
+             WHERE up.user_id = ?
+             ORDER BY p.name ASC'
+        );
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll();
+    }
+
+    public function setUserProjects(int $userId, array $projectIds): void
+    {
+        $del = $this->db->prepare('DELETE FROM user_projects WHERE user_id = ?');
+        $del->execute([$userId]);
+        $ins = $this->db->prepare('INSERT INTO user_projects (user_id, project_id) VALUES (?, ?)');
+        foreach ($projectIds as $pid) {
+            $ins->execute([$userId, (int)$pid]);
+        }
+    }
+
+    public function getUsersForProject(int $projectId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT u.id, u.name, u.email, u.role FROM users u
+             JOIN user_projects up ON u.id = up.user_id
+             WHERE up.project_id = ?
+             ORDER BY u.name ASC'
+        );
+        $stmt->execute([$projectId]);
+        return $stmt->fetchAll();
+    }
+
+    public function userHasProject(int $userId, int $projectId): bool
+    {
+        $stmt = $this->db->prepare(
+            'SELECT 1 FROM user_projects WHERE user_id = ? AND project_id = ?'
+        );
+        $stmt->execute([$userId, $projectId]);
+        return (bool)$stmt->fetch();
+    }
 }

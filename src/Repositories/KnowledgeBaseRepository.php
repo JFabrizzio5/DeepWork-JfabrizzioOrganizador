@@ -15,12 +15,48 @@ class KnowledgeBaseRepository
 
     public function findAll(array $filters = []): array
     {
-        $sql = 'SELECT kb.*, u.name as creator_name FROM knowledge_base kb LEFT JOIN users u ON kb.created_by = u.id WHERE 1=1';
+        $sql = 'SELECT kb.*, u.name as creator_name, p.name as project_name
+                FROM knowledge_base kb
+                LEFT JOIN users u ON kb.created_by = u.id
+                LEFT JOIN projects p ON kb.project_id = p.id
+                WHERE 1=1';
         $params = [];
 
         if (!empty($filters['tag_type'])) {
             $sql .= ' AND kb.tag_type = ?';
             $params[] = $filters['tag_type'];
+        }
+        if (!empty($filters['project_id'])) {
+            $sql .= ' AND kb.project_id = ?';
+            $params[] = (int)$filters['project_id'];
+        }
+
+        $sql .= ' ORDER BY kb.created_at DESC';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * KB articles visible to a colaborador: only articles tied to their assigned projects.
+     */
+    public function findForColaborador(int $userId, array $filters = []): array
+    {
+        $sql = 'SELECT kb.*, u.name as creator_name, p.name as project_name
+                FROM knowledge_base kb
+                LEFT JOIN users u ON kb.created_by = u.id
+                LEFT JOIN projects p ON kb.project_id = p.id
+                JOIN user_projects up ON kb.project_id = up.project_id AND up.user_id = ?
+                WHERE 1=1';
+        $params = [$userId];
+
+        if (!empty($filters['tag_type'])) {
+            $sql .= ' AND kb.tag_type = ?';
+            $params[] = $filters['tag_type'];
+        }
+        if (!empty($filters['project_id'])) {
+            $sql .= ' AND kb.project_id = ?';
+            $params[] = (int)$filters['project_id'];
         }
 
         $sql .= ' ORDER BY kb.created_at DESC';
@@ -32,7 +68,11 @@ class KnowledgeBaseRepository
     public function findById(int $id): ?array
     {
         $stmt = $this->db->prepare(
-            'SELECT kb.*, u.name as creator_name FROM knowledge_base kb LEFT JOIN users u ON kb.created_by = u.id WHERE kb.id = ?'
+            'SELECT kb.*, u.name as creator_name, p.name as project_name
+             FROM knowledge_base kb
+             LEFT JOIN users u ON kb.created_by = u.id
+             LEFT JOIN projects p ON kb.project_id = p.id
+             WHERE kb.id = ?'
         );
         $stmt->execute([$id]);
         $result = $stmt->fetch();
@@ -54,7 +94,7 @@ class KnowledgeBaseRepository
     public function create(array $data): int
     {
         $stmt = $this->db->prepare(
-            'INSERT INTO knowledge_base (title, content, tags, links, tag_type, created_by) VALUES (?, ?, ?, ?, ?, ?)'
+            'INSERT INTO knowledge_base (title, content, tags, links, tag_type, created_by, project_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $data['title'],
@@ -63,6 +103,7 @@ class KnowledgeBaseRepository
             $data['links'] ?? null,
             $data['tag_type'] ?? 'documentation',
             $data['created_by'] ?? null,
+            $data['project_id'] ?? null,
         ]);
         return (int)$this->db->lastInsertId();
     }

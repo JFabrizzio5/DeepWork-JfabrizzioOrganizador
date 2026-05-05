@@ -39,6 +39,11 @@ class KnowledgeBaseService
         return $this->kbRepo->create($data);
     }
 
+    public function getAllForColaborador(int $userId, array $filters = []): array
+    {
+        return $this->kbRepo->findForColaborador($userId, $filters);
+    }
+
     public function update(int $id, array $data): bool
     {
         return $this->kbRepo->update($id, $data);

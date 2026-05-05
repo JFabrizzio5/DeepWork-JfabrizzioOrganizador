@@ -7,6 +7,7 @@ use App\Core\Session;
 use App\Services\TicketService;
 use App\Services\EvidenceService;
 use App\Services\UserService;
+use App\Services\ProjectService;
 use App\Repositories\SucursalRepository;
 
 class TicketController
@@ -15,16 +16,18 @@ class TicketController
     private EvidenceService $evidenceService;
     private UserService $userService;
     private SucursalRepository $sucursalRepo;
+    private ProjectService $projectService;
     private Request $request;
 
     public function __construct()
     {
         Session::start();
-        $this->ticketService = new TicketService();
+        $this->ticketService   = new TicketService();
         $this->evidenceService = new EvidenceService();
-        $this->userService = new UserService();
-        $this->sucursalRepo = new SucursalRepository();
-        $this->request = new Request();
+        $this->userService     = new UserService();
+        $this->sucursalRepo    = new SucursalRepository();
+        $this->projectService  = new ProjectService();
+        $this->request         = new Request();
     }
 
     public function index(): void
@@ -37,6 +40,7 @@ class TicketController
             'escalation'  => $this->request->get('escalation', ''),
             'is_resolved' => $this->request->get('is_resolved', ''),
             'sucursal_id' => $this->request->get('sucursal_id', ''),
+            'project_id'  => $this->request->get('project_id', ''),
             'date_from'   => $this->request->get('date_from', ''),
             'date_to'     => $this->request->get('date_to', ''),
             'highlighted' => $this->request->get('highlighted', ''),
@@ -44,20 +48,26 @@ class TicketController
 
         if ($user['role'] === 'user') {
             $tickets = $this->ticketService->getUserTickets($user['id']);
+        } elseif ($user['role'] === 'colaborador') {
+            $tickets = $this->ticketService->getColaboradorTickets($user['id'], $filters);
         } else {
             $tickets = $this->ticketService->getAll($filters);
         }
 
-        $sucursales = $this->sucursalRepo->findAll();
+        $sucursales      = $this->sucursalRepo->findAll();
+        $userProjects    = ($user['role'] === 'admin')
+            ? $this->projectService->getAll()
+            : $this->projectService->getProjectsForUser($user['id']);
 
         Response::view('tickets/list', [
-            'appUrl'    => $_ENV['APP_URL'],
-            'user'      => $user,
-            'tickets'   => $tickets,
-            'filters'   => $filters,
-            'sucursales' => $sucursales,
-            'success'   => Session::getFlash('success'),
-            'error'     => Session::getFlash('error'),
+            'appUrl'      => $_ENV['APP_URL'],
+            'user'        => $user,
+            'tickets'     => $tickets,
+            'filters'     => $filters,
+            'sucursales'  => $sucursales,
+            'projects'    => $userProjects,
+            'success'     => Session::getFlash('success'),
+            'error'       => Session::getFlash('error'),
         ]);
     }
 
@@ -65,10 +75,15 @@ class TicketController
     {
         $user = $this->getCurrentUser();
         $sucursales = $this->sucursalRepo->findAll();
+        $userProjects = ($user['role'] === 'admin')
+            ? $this->projectService->getAll()
+            : $this->projectService->getProjectsForUser($user['id']);
+
         Response::view('tickets/create', [
             'appUrl'    => $_ENV['APP_URL'],
             'user'      => $user,
             'sucursales' => $sucursales,
+            'projects'  => $userProjects,
             'error'     => Session::getFlash('error'),
         ]);
     }
@@ -88,6 +103,7 @@ class TicketController
             'requester_name'     => trim($this->request->post('requester_name', '')),
             'requester_email'    => trim($this->request->post('requester_email', '')),
             'sucursal_id'        => $this->request->post('sucursal_id', null) ?: null,
+            'project_id'         => $this->request->post('project_id', null) ?: null,
         ];
 
         if (empty($data['description'])) {
@@ -131,8 +147,20 @@ class TicketController
             Response::abort(404, 'Ticket no encontrado.');
         }
 
+        // user: only their own tickets
         if ($user['role'] === 'user' && (int)$ticket['user_id'] !== $user['id']) {
             Response::abort(403, 'Acceso denegado.');
+        }
+
+        // colaborador: only cambio tickets within their assigned projects
+        if ($user['role'] === 'colaborador') {
+            if ($ticket['type'] !== 'cambio') {
+                Response::abort(403, 'Acceso denegado.');
+            }
+            $projectId = (int)($ticket['project_id'] ?? 0);
+            if (!$projectId || !$this->projectService->userHasProject($user['id'], $projectId)) {
+                Response::abort(403, 'Acceso denegado.');
+            }
         }
 
         $notes      = $this->ticketService->getNotes((int)$id);
